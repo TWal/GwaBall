@@ -1,0 +1,13 @@
+material BoxTest
+{
+	technique
+	{
+		pass
+		{
+			texture_unit
+			{
+				texture BoxTest.jpg
+			}
+		}
+	}
+}
