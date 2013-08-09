@@ -69,6 +69,18 @@ void GraphicsEngine::reset() {
 }
 
 void GraphicsEngine::changeState(int state) {
+    switch(state) {
+        case Game::GS_MENU:
+            _pause = true;
+            break;
+        case Game::GS_RUNNING:
+            _pause = false;
+            break;
+        case Game::GS_QUIT:
+            break;
+        default:
+            break;
+    }
 }
 
 bool GraphicsEngine::_render(double time) {

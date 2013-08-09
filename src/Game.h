@@ -22,14 +22,17 @@ class Game {
         int getState();
 
         enum GAMESTATE {
+            GS_MENU,
             GS_RUNNING,
             GS_QUIT
         };
 
     private:
+        void _createInput(bool grab);
+        void _deleteInput();
         std::chrono::high_resolution_clock::time_point _time;
         std::chrono::high_resolution_clock::time_point _lastTime;
-        bool running;
+        bool _running;
         int _state;
 
         GameEngine* _game;

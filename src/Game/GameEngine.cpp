@@ -2,6 +2,7 @@
 
 #include <Ogre.h>
 #include <btBulletDynamicsCommon.h>
+#include "../Game.h"
 #include "../Physics/PhysicsEngine.h"
 #include "../Graphics/GraphicsEngine.h"
 
@@ -31,5 +32,17 @@ void GameEngine::reset() {
 }
 
 void GameEngine::changeState(int state) {
+    switch(state) {
+        case Game::GS_MENU:
+            _pause = true;
+            break;
+        case Game::GS_RUNNING:
+            _pause = false;
+            break;
+        case Game::GS_QUIT:
+            break;
+        default:
+            break;
+    }
 }
 

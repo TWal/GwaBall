@@ -20,16 +20,30 @@ Game::Game() {
     _physics->init();
     _graphics->init();
 
+    _createInput(false);
+
+    _time = std::chrono::high_resolution_clock::now();
+}
+
+Game::~Game() {
+    delete _game;
+    delete _physics;
+    delete _graphics;
+}
+
+void Game::_createInput(bool grab) {
     OIS::ParamList pl;
     size_t windowHnd = 0;
     std::ostringstream windowHndStr;
+    std::ostringstream grabStr;
 
     _graphics->getRenderWindow()->getCustomAttribute("WINDOW", &windowHnd);
     windowHndStr << windowHnd;
+    grabStr << std::boolalpha << grab;
     pl.insert(std::make_pair("WINDOW", windowHndStr.str()));
-    pl.insert(std::make_pair(std::string("x11_mouse_grab"), std::string("false")));
-    pl.insert(std::make_pair(std::string("x11_mouse_hide"), std::string("false")));
-    pl.insert(std::make_pair(std::string("x11_keyboard_grab"), std::string("false")));
+    pl.insert(std::make_pair(std::string("x11_mouse_grab"), grabStr.str()));
+    pl.insert(std::make_pair(std::string("x11_mouse_hide"), grabStr.str()));
+    pl.insert(std::make_pair(std::string("x11_keyboard_grab"), grabStr.str()));
     _inputManager = OIS::InputManager::createInputSystem(pl);
 
     _mouse = (OIS::Mouse*)_inputManager->createInputObject(OIS::OISMouse, true);
@@ -43,24 +57,19 @@ Game::Game() {
     const OIS::MouseState& ms = _mouse->getMouseState();
     ms.width = width;
     ms.height = height;
-
-    _time = std::chrono::high_resolution_clock::now();
 }
 
-Game::~Game() {
-    delete _game;
-    delete _physics;
-    delete _graphics;
-
+void Game::_deleteInput() {
     _inputManager->destroyInputObject(_mouse);
     _inputManager->destroyInputObject(_keyboard);
     OIS::InputManager::destroyInputSystem(_inputManager);
 }
 
+
 void Game::run() {
-    running = true;
+    _running = true;
     changeState(GS_RUNNING);
-    while(running) {
+    while(_running) {
         _lastTime = _time;
         _time = std::chrono::high_resolution_clock::now();
         double elapsedTime = (std::chrono::duration_cast<std::chrono::duration<double>>(_time - _lastTime)).count();
@@ -72,7 +81,13 @@ void Game::run() {
         _physics->frame(elapsedTime);
         _graphics->frame(elapsedTime);
 
-        if(_keyboard->isKeyDown(OIS::KC_ESCAPE)) {
+        if(_keyboard->isKeyDown(OIS::KC_M)) {
+            changeState(GS_MENU);
+        }
+        if(_keyboard->isKeyDown(OIS::KC_R)) {
+            changeState(GS_RUNNING);
+        }
+        if(_keyboard->isKeyDown(OIS::KC_ESCAPE) || _keyboard->isKeyDown(OIS::KC_Q)) {
             changeState(GS_QUIT);
         }
     }
@@ -80,9 +95,23 @@ void Game::run() {
 
 void Game::changeState(int state) {
     _state = state;
+    _game->changeState(state);
+    _physics->changeState(state);
     _graphics->changeState(state);
-    if(_state == GS_QUIT) {
-        running = false;
+    switch(state) {
+        case GS_MENU:
+            _deleteInput();
+            _createInput(false);
+            break;
+        case GS_RUNNING:
+            _deleteInput();
+            _createInput(true);
+            break;
+        case GS_QUIT:
+            _running = false;
+            break;
+        default:
+            break;
     }
 }
 

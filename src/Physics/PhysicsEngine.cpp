@@ -4,6 +4,7 @@
 #include <BulletCollision/Gimpact/btGImpactCollisionAlgorithm.h>
 #include <cfloat>
 
+#include "../Game.h"
 #include "PhysicsHelper.h"
 
 PhysicsEngine::PhysicsEngine(Game* parent) : Engine(parent) {
@@ -47,6 +48,18 @@ void PhysicsEngine::reset() {
 }
 
 void PhysicsEngine::changeState(int state) {
+    switch(state) {
+        case Game::GS_MENU:
+            _pause = true;
+            break;
+        case Game::GS_RUNNING:
+            _pause = false;
+            break;
+        case Game::GS_QUIT:
+            break;
+        default:
+            break;
+    }
 }
 
 
