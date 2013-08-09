@@ -9,6 +9,7 @@ namespace OIS {
     class InputManager;
 }
 
+class GameEngine;
 class PhysicsEngine;
 class GraphicsEngine;
 
@@ -31,6 +32,7 @@ class Game {
         bool running;
         int _state;
 
+        GameEngine* _game;
         PhysicsEngine* _physics;
         GraphicsEngine* _graphics;
 

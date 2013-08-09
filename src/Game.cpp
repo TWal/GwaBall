@@ -2,20 +2,23 @@
 
 #include <OIS.h>
 #include <sstream>
+#include "Game/GameEngine.h"
 #include "Graphics/GraphicsEngine.h"
 #include "Physics/PhysicsEngine.h"
 #include <OgreRenderWindow.h>
-//
-//Just for tests
-#include <Ogre.h>
-#include <btBulletDynamicsCommon.h>
 
 Game::Game() {
+    _game = new GameEngine(this);
     _physics = new PhysicsEngine(this);
     _graphics = new GraphicsEngine(this);
 
-    _physics->attachEngines(_physics, _graphics);
-    _graphics->attachEngines(_physics, _graphics);
+    _game->attachEngines(_game, _physics, _graphics);
+    _physics->attachEngines(_game, _physics, _graphics);
+    _graphics->attachEngines(_game, _physics, _graphics);
+
+    _game->init();
+    _physics->init();
+    _graphics->init();
 
     OIS::ParamList pl;
     size_t windowHnd = 0;
@@ -41,22 +44,14 @@ Game::Game() {
     ms.width = width;
     ms.height = height;
 
-
-    //Test
-    btCollisionShape* shape = new btBoxShape(btVector3(1, 1, 1));
-    Ogre::SceneNode* fixedBoxNode = _graphics->getSceneManager()->getRootSceneNode()->createChildSceneNode();
-    fixedBoxNode->attachObject(_graphics->getSceneManager()->createEntity("FixedBox", "BoxTest.mesh"));
-    fixedBoxNode->setPosition(0, 0, 0);
-    _physics->addRigidBody(0.0, shape, fixedBoxNode);
-
-    Ogre::SceneNode* fallingBoxNode = _graphics->getSceneManager()->getRootSceneNode()->createChildSceneNode();
-    fallingBoxNode->attachObject(_graphics->getSceneManager()->createEntity("FallingBox", "BoxTest.mesh"));
-    fallingBoxNode->setPosition(0, 5, -1);
-    _physics->addRigidBody(2.0, shape, fallingBoxNode);
     _time = std::chrono::high_resolution_clock::now();
 }
 
 Game::~Game() {
+    delete _game;
+    delete _physics;
+    delete _graphics;
+
     _inputManager->destroyInputObject(_mouse);
     _inputManager->destroyInputObject(_keyboard);
     OIS::InputManager::destroyInputSystem(_inputManager);
@@ -73,6 +68,7 @@ void Game::run() {
         _keyboard->capture();
         _mouse->capture();
 
+        _game->frame(elapsedTime);
         _physics->frame(elapsedTime);
         _graphics->frame(elapsedTime);
 

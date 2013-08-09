@@ -23,6 +23,7 @@ class PhysicsEngine : public Engine {
         PhysicsEngine(Game* parent);
         virtual ~PhysicsEngine ();
 
+        virtual void init();
         virtual void frame(double time);
         virtual void reset();
         virtual void changeState(int state);

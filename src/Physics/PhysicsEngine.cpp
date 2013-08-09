@@ -32,6 +32,9 @@ void PhysicsEngine::_destroy() {
     delete _constraintSolver;
 }
 
+void PhysicsEngine::init() {
+}
+
 void PhysicsEngine::frame(double time) {
     if(!_pause) {
         _world->stepSimulation(time);

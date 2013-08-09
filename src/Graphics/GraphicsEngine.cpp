@@ -53,6 +53,9 @@ GraphicsEngine::~GraphicsEngine() {
     delete _root;
 }
 
+void GraphicsEngine::init() {
+}
+
 void GraphicsEngine::frame(double time) {
     bool renderResult = _render(time);
     Ogre::WindowEventUtilities::messagePump();

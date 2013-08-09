@@ -8,14 +8,16 @@ namespace OIS {
 }
 
 class Game;
-class GraphicsEngine;
+class GameEngine;
 class PhysicsEngine;
+class GraphicsEngine;
 
 class Engine {
     public:
         Engine(Game* parent);
         virtual ~Engine();
 
+        virtual void init() = 0;
         virtual void frame(double time) = 0;
         virtual void reset() = 0;
         virtual void changeState(int state) = 0;
@@ -24,10 +26,11 @@ class Engine {
         void setPause(bool pause);
         bool getPause();
 
-        void attachEngines(PhysicsEngine* physics, GraphicsEngine* graphics);
+        void attachEngines(GameEngine* game, PhysicsEngine* physics, GraphicsEngine* graphics);
         void attachInput(OIS::Mouse* mouse, OIS::Keyboard* keyboard);
 
         Game* parent();
+        GameEngine* getGameEngine();
         PhysicsEngine* getPhysicsEngine();
         GraphicsEngine* getGraphicsEngine();
         OIS::Mouse* getMouse();
@@ -35,6 +38,7 @@ class Engine {
 
     protected:
         Game* _parent;
+        GameEngine* _game;
         PhysicsEngine* _physics;
         GraphicsEngine* _graphics;
         OIS::Mouse* _mouse;

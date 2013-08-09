@@ -11,7 +11,8 @@ Engine::Engine(Game *parent) :
 Engine::~Engine() {
 }
 
-void Engine::attachEngines(PhysicsEngine* physics, GraphicsEngine* graphics) {
+void Engine::attachEngines(GameEngine* game, PhysicsEngine* physics, GraphicsEngine* graphics) {
+    _game = game;
     _physics = physics;
     _graphics = graphics;
 }
@@ -35,6 +36,10 @@ bool Engine::getPause() {
 
 Game* Engine::parent() {
     return _parent;
+}
+
+GameEngine* Engine::getGameEngine() {
+    return _game;
 }
 
 PhysicsEngine* Engine::getPhysicsEngine() {

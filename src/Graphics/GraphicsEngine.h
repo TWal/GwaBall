@@ -18,6 +18,7 @@ class GraphicsEngine : public Engine {
         GraphicsEngine(Game* parent);
         virtual ~GraphicsEngine();
 
+        virtual void init();
         virtual void frame(double time);
         virtual void reset();
         virtual void changeState(int state);
