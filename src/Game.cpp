@@ -57,6 +57,11 @@ void Game::_createInput(bool grab) {
     const OIS::MouseState& ms = _mouse->getMouseState();
     ms.width = width;
     ms.height = height;
+
+    //Suppose engines are created
+    _game->attachInput(_mouse, _keyboard);
+    _physics->attachInput(_mouse, _keyboard);
+    _graphics->attachInput(_mouse, _keyboard);
 }
 
 void Game::_deleteInput() {

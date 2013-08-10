@@ -9,6 +9,7 @@ namespace Ogre {
     class Entity;
     class SceneNode;
 }
+class Player;
 
 class GameEngine : public Engine {
     public:
@@ -21,6 +22,7 @@ class GameEngine : public Engine {
         virtual void changeState(int state);
 
     private:
+        Player* _player;
 };
 
 #endif
