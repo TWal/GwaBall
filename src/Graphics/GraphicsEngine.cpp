@@ -12,18 +12,18 @@
 #include "../Game.h"
 
 GraphicsEngine::GraphicsEngine(Game* parent) : Engine(parent) {
-	try {
-		_root = new Ogre::Root();
-		if(!_root->restoreConfig()) {
-			if(!_root->showConfigDialog()) {
-				delete _root;
-				return;
-			}
-		}
-		_renderWindow = _root->initialise(true, "GwaBall");
-		_smgr = _root->createSceneManager(Ogre::ST_GENERIC);
+    try {
+        _root = new Ogre::Root();
+        if(!_root->restoreConfig()) {
+            if(!_root->showConfigDialog()) {
+                delete _root;
+                return;
+            }
+        }
+        _renderWindow = _root->initialise(true, "GwaBall");
+        _smgr = _root->createSceneManager(Ogre::ST_GENERIC);
 
-		Ogre::ConfigFile cf;
+        Ogre::ConfigFile cf;
         cf.load("resources.cfg");
         Ogre::ConfigFile::SectionIterator sectionIterator = cf.getSectionIterator();
         while (sectionIterator.hasMoreElements()) {
@@ -34,19 +34,19 @@ GraphicsEngine::GraphicsEngine(Game* parent) : Engine(parent) {
         }
         Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
 
-		_camera = _smgr->createCamera("Camera");
-		_camera->setFOVy(Ogre::Degree(90));
-		_camera->setNearClipDistance(1);
-		_camera->setFarClipDistance(1000);
+        _camera = _smgr->createCamera("Camera");
+        _camera->setFOVy(Ogre::Degree(90));
+        _camera->setNearClipDistance(1);
+        _camera->setFarClipDistance(1000);
         _camera->setPosition(5, 3, 0);
         _camera->lookAt(0, 0, 0);
-		_viewport = _renderWindow->addViewport(_camera);
-		_viewport->setBackgroundColour(Ogre::ColourValue(1.f, 1.f, 1.f, 1.f));
-	} catch(Ogre::Exception& e) {
-		std::cerr << "An Ogre exception occured: " << e.getFullDescription() << "." << std::endl;
-	} catch(std::exception& e) {
-		std::cerr << "An exception occured: " << e.what() << "." << std::endl;
-	}
+        _viewport = _renderWindow->addViewport(_camera);
+        _viewport->setBackgroundColour(Ogre::ColourValue(1.f, 1.f, 1.f, 1.f));
+    } catch(Ogre::Exception& e) {
+        std::cerr << "An Ogre exception occured: " << e.getFullDescription() << "." << std::endl;
+    } catch(std::exception& e) {
+        std::cerr << "An exception occured: " << e.what() << "." << std::endl;
+    }
 }
 
 GraphicsEngine::~GraphicsEngine() {
