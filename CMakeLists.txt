@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 
 project (GwaBall)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
-SET(CMAKE_CXX_FLAGS "-g -Wall -Wextra -pedantic -std=c++0x")
+SET(CMAKE_CXX_FLAGS "-g -Wall -pedantic -std=c++0x")
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 

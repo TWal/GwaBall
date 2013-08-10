@@ -3,5 +3,5 @@ CMakeFiles
 Makefile
 cmake_install.cmake
 bin/GwaBall
-bin/Ogre.log
+*.log
 compile_commands.json
