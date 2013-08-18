@@ -2,7 +2,8 @@
 
 #include <Ogre.h>
 #include <btBulletDynamicsCommon.h>
-#include <OIS.h>
+#include <OISKeyboard.h>
+#include "../Input/InputEngine.h"
 #include "../Game.h"
 #include "../Physics/PhysicsEngine.h"
 #include "../Graphics/GraphicsEngine.h"
@@ -31,19 +32,20 @@ void GameEngine::init() {
 }
 
 void GameEngine::frame(double time) {
-    _player->frame(time);
-
-    if(_keyboard->isKeyDown(OIS::KC_UP)) {
-        _player->move(btVector3(-1, 0, 0), time);
-    }
-    if(_keyboard->isKeyDown(OIS::KC_DOWN)) {
-        _player->move(btVector3(1, 0, 0), time);
-    }
-    if(_keyboard->isKeyDown(OIS::KC_LEFT)) {
-        _player->move(btVector3(0, 0, 1), time);
-    }
-    if(_keyboard->isKeyDown(OIS::KC_RIGHT)) {
-        _player->move(btVector3(0, 0, -1), time);
+    if(!_pause) {
+        _player->frame(time);
+        if(_input->getKeyboard()->isKeyDown(OIS::KC_UP)) {
+            _player->move(btVector3(-1, 0, 0), time);
+        }
+        if(_input->getKeyboard()->isKeyDown(OIS::KC_DOWN)) {
+            _player->move(btVector3(1, 0, 0), time);
+        }
+        if(_input->getKeyboard()->isKeyDown(OIS::KC_LEFT)) {
+            _player->move(btVector3(0, 0, 1), time);
+        }
+        if(_input->getKeyboard()->isKeyDown(OIS::KC_RIGHT)) {
+            _player->move(btVector3(0, 0, -1), time);
+        }
     }
 }
 

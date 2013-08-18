@@ -1,13 +1,8 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-namespace OIS {
-    class Mouse;
-    class Keyboard;
-    class InputManager;
-}
-
 class Game;
+class InputEngine;
 class GameEngine;
 class PhysicsEngine;
 class GraphicsEngine;
@@ -26,23 +21,20 @@ class Engine {
         void setPause(bool pause);
         bool getPause();
 
-        void attachEngines(GameEngine* game, PhysicsEngine* physics, GraphicsEngine* graphics);
-        void attachInput(OIS::Mouse* mouse, OIS::Keyboard* keyboard);
+        void attachEngines(InputEngine* input, GameEngine* game, PhysicsEngine* physics, GraphicsEngine* graphics);
 
         Game* parent();
+        InputEngine* getInputEngine();
         GameEngine* getGameEngine();
         PhysicsEngine* getPhysicsEngine();
         GraphicsEngine* getGraphicsEngine();
-        OIS::Mouse* getMouse();
-        OIS::Keyboard* getKeyboard();
 
     protected:
         Game* _parent;
+        InputEngine* _input;
         GameEngine* _game;
         PhysicsEngine* _physics;
         GraphicsEngine* _graphics;
-        OIS::Mouse* _mouse;
-        OIS::Keyboard* _keyboard;
         bool _pause;
 };
 

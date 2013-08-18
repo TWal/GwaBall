@@ -2,24 +2,21 @@
 
 Engine::Engine(Game *parent) :
     _parent(parent),
+    _input(nullptr),
+    _game(nullptr),
+    _physics(nullptr),
     _graphics(nullptr),
-    _mouse(nullptr),
-    _keyboard(nullptr),
     _pause(false) {
 }
 
 Engine::~Engine() {
 }
 
-void Engine::attachEngines(GameEngine* game, PhysicsEngine* physics, GraphicsEngine* graphics) {
+void Engine::attachEngines(InputEngine* input, GameEngine* game, PhysicsEngine* physics, GraphicsEngine* graphics) {
+    _input = input;
     _game = game;
     _physics = physics;
     _graphics = graphics;
-}
-
-void Engine::attachInput(OIS::Mouse* mouse, OIS::Keyboard* keyboard) {
-    _mouse = mouse;
-    _keyboard = keyboard;
 }
 
 void Engine::togglePause() {
@@ -38,6 +35,10 @@ Game* Engine::parent() {
     return _parent;
 }
 
+InputEngine* Engine::getInputEngine() {
+    return _input;
+}
+
 GameEngine* Engine::getGameEngine() {
     return _game;
 }
@@ -50,10 +51,3 @@ GraphicsEngine* Engine::getGraphicsEngine() {
     return _graphics;
 }
 
-OIS::Mouse* Engine::getMouse() {
-    return _mouse;
-}
-
-OIS::Keyboard* Engine::getKeyboard() {
-    return _keyboard;
-}
