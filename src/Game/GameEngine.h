@@ -21,6 +21,8 @@ class GameEngine : public Engine {
         virtual void reset();
         virtual void changeState(int state);
 
+        Player* getPlayer();
+
     private:
         Player* _player;
 };

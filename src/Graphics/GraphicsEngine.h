@@ -12,6 +12,7 @@ namespace Ogre {
 }
 
 class Game;
+class CameraManager;
 
 class GraphicsEngine : public Engine {
     public:
@@ -25,6 +26,7 @@ class GraphicsEngine : public Engine {
 
         Ogre::RenderWindow* getRenderWindow();
         Ogre::SceneManager* getSceneManager();
+        CameraManager* getCameraManager();
 
     private:
         bool _render(double time);
@@ -32,7 +34,7 @@ class GraphicsEngine : public Engine {
         Ogre::RenderWindow* _renderWindow;
         Ogre::SceneManager* _smgr;
         Ogre::Viewport* _viewport;
-        Ogre::Camera* _camera;
+        CameraManager* _cameraMgr;
 };
 
 #endif

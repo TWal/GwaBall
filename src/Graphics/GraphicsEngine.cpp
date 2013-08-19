@@ -10,6 +10,8 @@
 #include <OgreConfigFile.h>
 #include <OgreWindowEventUtilities.h>
 #include "../Game.h"
+#include "CameraManager.h"
+#include "../Input/InputEngine.h"
 
 GraphicsEngine::GraphicsEngine(Game* parent) : Engine(parent) {
     try {
@@ -33,14 +35,8 @@ GraphicsEngine::GraphicsEngine(Game* parent) : Engine(parent) {
             }
         }
         Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
-
-        _camera = _smgr->createCamera("Camera");
-        _camera->setFOVy(Ogre::Degree(90));
-        _camera->setNearClipDistance(1);
-        _camera->setFarClipDistance(1000);
-        _camera->setPosition(5, 3, 0);
-        _camera->lookAt(0, 0, 0);
-        _viewport = _renderWindow->addViewport(_camera);
+        _cameraMgr = new CameraManager(this);
+        _viewport = _renderWindow->addViewport(_cameraMgr->getCamera());
         _viewport->setBackgroundColour(Ogre::ColourValue(1.f, 1.f, 1.f, 1.f));
     } catch(Ogre::Exception& e) {
         std::cerr << "An Ogre exception occured: " << e.getFullDescription() << "." << std::endl;
@@ -57,6 +53,7 @@ void GraphicsEngine::init() {
 }
 
 void GraphicsEngine::frame(double time) {
+    _cameraMgr->update();
     bool renderResult = _render(time);
     Ogre::WindowEventUtilities::messagePump();
     if(_renderWindow->isClosed() || !renderResult) {
@@ -81,6 +78,11 @@ void GraphicsEngine::changeState(int state) {
         default:
             break;
     }
+    if(_pause) {
+        _input->removeListener(_cameraMgr);
+    } else {
+        _input->addListener(_cameraMgr);
+    }
 }
 
 bool GraphicsEngine::_render(double time) {
@@ -93,4 +95,8 @@ Ogre::RenderWindow* GraphicsEngine::getRenderWindow() {
 
 Ogre::SceneManager* GraphicsEngine::getSceneManager() {
     return _smgr;
+}
+
+CameraManager* GraphicsEngine::getCameraManager() {
+    return _cameraMgr;
 }

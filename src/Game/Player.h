@@ -19,6 +19,8 @@ class Player {
         void frame(double time);
         void reset();
 
+        Ogre::SceneNode* getSceneNode();
+
     private:
         float _getNFromVel(float vel);
         float _getAccFromN(float N);

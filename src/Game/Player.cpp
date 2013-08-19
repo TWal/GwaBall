@@ -87,3 +87,6 @@ float Player::_getAccFromN(float N) {
     return (CONST_ADD * pow(CONST_DIV, 1-N) * log(CONST_DIV)) / (CONST_DIV - 1);
 }
 
+Ogre::SceneNode* Player::getSceneNode() {
+    return _node;
+}
