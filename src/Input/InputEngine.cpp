@@ -82,14 +82,11 @@ void InputEngine::setGrab(bool grab) {
 }
 
 void InputEngine::addListener(InputListener* listener) {
-    _listeners.push_back(listener);
+    _listeners.insert(listener);
 }
 
 void InputEngine::removeListener(InputListener* listener) {
-    auto it = std::find(_listeners.begin(), _listeners.end(), listener);
-    if(it != _listeners.end()) {
-        _listeners.erase(it);
-    }
+    _listeners.erase(listener);
 }
 
 OIS::Keyboard* InputEngine::getKeyboard() {

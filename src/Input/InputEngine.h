@@ -2,7 +2,7 @@
 #define INPUT_INPUTENGINE_H
 
 #include "../Engine.h"
-#include <vector>
+#include <unordered_set>
 #include <OISKeyboard.h>
 #include <OISMouse.h>
 
@@ -36,7 +36,7 @@ class InputEngine : public Engine, public OIS::MouseListener, public OIS::KeyLis
         OIS::InputManager* _inputManager;
         OIS::Mouse* _mouse;
         OIS::Keyboard* _keyboard;
-        std::vector<InputListener*> _listeners;
+        std::unordered_set<InputListener*> _listeners;
         bool _grab;
 };
 
