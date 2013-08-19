@@ -11,9 +11,12 @@
 #include "../Game.h"
 #include "CameraManager.h"
 #include "../Input/InputEngine.h"
+#include "../Logger.h"
 
 GraphicsEngine::GraphicsEngine(Game* parent) : Engine(parent) {
+    _log = new Logger(Logger::INFO, Logger::STDERR | Logger::LOGFILE, "Logs/GraphicsEngine.log");
     try {
+        _log->info("Starting Ogre");
         _root = new Ogre::Root();
         if(!_root->restoreConfig()) {
             if(!_root->showConfigDialog()) {
@@ -24,6 +27,7 @@ GraphicsEngine::GraphicsEngine(Game* parent) : Engine(parent) {
         _renderWindow = _root->initialise(true, "GwaBall");
         _smgr = _root->createSceneManager(Ogre::ST_GENERIC);
 
+        _log->info("Loading resources.cfg");
         Ogre::ConfigFile cf;
         cf.load("resources.cfg");
         Ogre::ConfigFile::SectionIterator sectionIterator = cf.getSectionIterator();
@@ -34,14 +38,16 @@ GraphicsEngine::GraphicsEngine(Game* parent) : Engine(parent) {
             }
         }
         Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
+
+        _log->info("Creating the camera manager");
         _cameraMgr = new CameraManager(this);
         _viewport = _renderWindow->addViewport(_cameraMgr->getCamera());
         _viewport->setBackgroundColour(Ogre::ColourValue(1.f, 1.f, 1.f, 1.f));
         Ogre::WindowEventUtilities::addWindowEventListener(_renderWindow, this);
     } catch(Ogre::Exception& e) {
-        std::cerr << "An Ogre exception occured: " << e.getFullDescription() << "." << std::endl;
+        _log->error("An Ogre exception occured: %s.", e.getFullDescription().c_str());
     } catch(std::exception& e) {
-        std::cerr << "An exception occured: " << e.what() << "." << std::endl;
+        _log->error("An exception occured: %s.", e.what());
     }
 }
 

@@ -6,8 +6,10 @@
 
 #include "../Game.h"
 #include "PhysicsHelper.h"
+#include "../Logger.h"
 
 PhysicsEngine::PhysicsEngine(Game* parent) : Engine(parent) {
+    _log = new Logger(Logger::INFO, Logger::STDERR | Logger::LOGFILE, "Logs/PhysicsEngine.log");
     _construct();
 }
 

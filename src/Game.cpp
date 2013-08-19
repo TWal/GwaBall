@@ -4,29 +4,36 @@
 #include "Game/GameEngine.h"
 #include "Graphics/GraphicsEngine.h"
 #include "Physics/PhysicsEngine.h"
+#include "Logger.h"
 
 #include <OISKeyboard.h>
 
 Game::Game() {
+    _log = new Logger(Logger::INFO, Logger::STDERR | Logger::LOGFILE, "Logs/Game.log");
+    _log->info("Creating engines");
     _input = new InputEngine(this);
     _game = new GameEngine(this);
     _physics = new PhysicsEngine(this);
     _graphics = new GraphicsEngine(this);
 
+    _log->info("Attaching engines");
     _input->attachEngines(_input, _game, _physics, _graphics);
     _game->attachEngines(_input, _game, _physics, _graphics);
     _physics->attachEngines(_input, _game, _physics, _graphics);
     _graphics->attachEngines(_input, _game, _physics, _graphics);
 
+    _log->info("Initializing engines");
     _input->init();
     _game->init();
     _physics->init();
     _graphics->init();
 
+    _log->info("Initializing clock");
     _time = std::chrono::high_resolution_clock::now();
 }
 
 Game::~Game() {
+    _log->info("Deleting engines");
     delete _game;
     delete _physics;
     delete _graphics;
@@ -58,6 +65,7 @@ void Game::run() {
 }
 
 void Game::changeState(int state) {
+    _log->info("Changing state from %d to %d", _state, state);
     _state = state;
     _game->changeState(state);
     _physics->changeState(state);

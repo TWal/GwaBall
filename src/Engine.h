@@ -2,6 +2,7 @@
 #define ENGINE_H
 
 class Game;
+class Logger;
 class InputEngine;
 class GameEngine;
 class PhysicsEngine;
@@ -31,6 +32,7 @@ class Engine {
 
     protected:
         Game* _parent;
+        Logger* _log;
         InputEngine* _input;
         GameEngine* _game;
         PhysicsEngine* _physics;

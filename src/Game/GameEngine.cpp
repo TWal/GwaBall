@@ -10,8 +10,11 @@
 #include "../Graphics/CameraManager.h"
 #include "Player.h"
 #include "../Utils.h"
+#include "../Logger.h"
 
 GameEngine::GameEngine(Game* parent) : Engine(parent) {
+    _log = new Logger(Logger::INFO, Logger::STDERR | Logger::LOGFILE, "Logs/GameEngine.log");
+    _log->info("Creating player");
     _player = new Player(this);
 }
 

@@ -4,9 +4,11 @@
 #include "../Graphics/GraphicsEngine.h"
 #include "InputListener.h"
 #include <OgreRenderWindow.h>
+#include "../Logger.h"
 
 InputEngine::InputEngine(Game* parent) : Engine(parent) {
     _grab = false;
+    _log = new Logger(Logger::INFO, Logger::STDERR | Logger::LOGFILE, "Logs/InputEngine.log");
 }
 
 InputEngine::~InputEngine() {
@@ -14,6 +16,12 @@ InputEngine::~InputEngine() {
 }
 
 void InputEngine::_create() {
+    if(_grab) {
+        _log->info("Creating input with grabbing enabled");
+    } else {
+        _log->info("Creating input with grabbing disabled");
+    }
+
     OIS::ParamList pl;
     size_t windowHnd = 0;
     std::ostringstream windowHndStr;

@@ -7,6 +7,7 @@ class InputEngine;
 class GameEngine;
 class PhysicsEngine;
 class GraphicsEngine;
+class Logger;
 
 class Game {
     public:
@@ -32,6 +33,8 @@ class Game {
         GameEngine* _game;
         PhysicsEngine* _physics;
         GraphicsEngine* _graphics;
+
+        Logger* _log;
 };
 
 #endif
