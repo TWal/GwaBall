@@ -69,6 +69,7 @@ void InputEngine::frame(double time) {
 void InputEngine::reset() {
     _destroy();
     _create();
+    _listeners.clear();
 }
 
 void InputEngine::changeState(int state) {
@@ -79,6 +80,10 @@ void InputEngine::setGrab(bool grab) {
     _grab = grab;
     _destroy();
     _create();
+}
+
+bool InputEngine::getGrab() {
+    return _grab;
 }
 
 void InputEngine::addListener(InputListener* listener) {

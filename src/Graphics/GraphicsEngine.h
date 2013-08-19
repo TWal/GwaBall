@@ -2,6 +2,7 @@
 #define GRAPHICS_GRAPHICSENGINE_H
 
 #include "../Engine.h"
+#include <OgreWindowEventUtilities.h>
 
 namespace Ogre {
     class Root;
@@ -14,7 +15,7 @@ namespace Ogre {
 class Game;
 class CameraManager;
 
-class GraphicsEngine : public Engine {
+class GraphicsEngine : public Engine, private Ogre::WindowEventListener {
     public:
         GraphicsEngine(Game* parent);
         virtual ~GraphicsEngine();
@@ -29,6 +30,8 @@ class GraphicsEngine : public Engine {
         CameraManager* getCameraManager();
 
     private:
+        virtual void windowMoved(Ogre::RenderWindow* rw);
+        virtual void windowResized(Ogre::RenderWindow* rw);
         bool _render(double time);
         Ogre::Root* _root;
         Ogre::RenderWindow* _renderWindow;

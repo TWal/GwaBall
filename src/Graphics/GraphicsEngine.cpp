@@ -8,7 +8,6 @@
 #include <OgreResourceManager.h>
 #include <OgreException.h>
 #include <OgreConfigFile.h>
-#include <OgreWindowEventUtilities.h>
 #include "../Game.h"
 #include "CameraManager.h"
 #include "../Input/InputEngine.h"
@@ -38,6 +37,7 @@ GraphicsEngine::GraphicsEngine(Game* parent) : Engine(parent) {
         _cameraMgr = new CameraManager(this);
         _viewport = _renderWindow->addViewport(_cameraMgr->getCamera());
         _viewport->setBackgroundColour(Ogre::ColourValue(1.f, 1.f, 1.f, 1.f));
+        Ogre::WindowEventUtilities::addWindowEventListener(_renderWindow, this);
     } catch(Ogre::Exception& e) {
         std::cerr << "An Ogre exception occured: " << e.getFullDescription() << "." << std::endl;
     } catch(std::exception& e) {
@@ -87,6 +87,14 @@ void GraphicsEngine::changeState(int state) {
 
 bool GraphicsEngine::_render(double time) {
     return _root->renderOneFrame(_pause ? 0.f : time);
+}
+
+void GraphicsEngine::windowMoved(Ogre::RenderWindow* rw) {
+    _input->setGrab(_input->getGrab());
+}
+
+void GraphicsEngine::windowResized(Ogre::RenderWindow* rw) {
+    _input->setGrab(_input->getGrab());
 }
 
 Ogre::RenderWindow* GraphicsEngine::getRenderWindow() {

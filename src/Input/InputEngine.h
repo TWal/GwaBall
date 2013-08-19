@@ -17,7 +17,7 @@ class InputEngine : public Engine, public OIS::MouseListener, public OIS::KeyLis
         virtual void reset();
         virtual void changeState(int state);
         void setGrab(bool grab);
-
+        bool getGrab();
         void addListener(InputListener* listener);
         void removeListener(InputListener* listener);
 
