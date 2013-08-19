@@ -23,13 +23,13 @@ void GameEngine::init() {
     Ogre::SceneNode* fixedBoxNode = _graphics->getSceneManager()->getRootSceneNode()->createChildSceneNode();
     fixedBoxNode->attachObject(_graphics->getSceneManager()->createEntity("FixedBox", "GroundTest.mesh"));
     fixedBoxNode->setPosition(0, 0, 0);
-    _physics->addRigidBody(0.0, fixedBoxShape, fixedBoxNode);
+    _physics->addRigidBody(0.0, fixedBoxShape, fixedBoxNode, PhysicsEngine::COL_STATIC, PhysicsEngine::COL_ALL);
 
     btCollisionShape* fallingBoxShape = new btBoxShape(btVector3(1, 1, 1));
     Ogre::SceneNode* fallingBoxNode = _graphics->getSceneManager()->getRootSceneNode()->createChildSceneNode();
     fallingBoxNode->attachObject(_graphics->getSceneManager()->createEntity("FallingBox", "BoxTest.mesh"));
     fallingBoxNode->setPosition(0, 5, -1);
-    _physics->addRigidBody(2.0, fallingBoxShape, fallingBoxNode);
+    _physics->addRigidBody(2.0, fallingBoxShape, fallingBoxNode, PhysicsEngine::COL_DYNAMIC, PhysicsEngine::COL_ALL);
     _player->init();
 }
 

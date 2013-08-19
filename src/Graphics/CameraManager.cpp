@@ -1,11 +1,13 @@
 #include "CameraManager.h"
 #include "GraphicsEngine.h"
 #include "../Game/GameEngine.h"
+#include "../Physics/PhysicsEngine.h"
 #include "../Game/Player.h"
 #include <OgreSceneNode.h>
 #include <OgreCamera.h>
 #include <OgreSceneManager.h>
 #include <OgreRay.h>
+#include <iostream>
 
 const static int PIXEL_NUMBER_HALF_TURN = 300;
 const static int WHEEL_MAGIC = -120;
@@ -31,6 +33,13 @@ void CameraManager::update() {
     Player* player = _parent->getGameEngine()->getPlayer();
     if(player && player->getSceneNode()) {
         _toPlayerNode->setPosition(player->getSceneNode()->getPosition());
+        //TODO: avoid magic constants, 0.25 is the half of the player's radius
+        PhysicsEngine::RayResult result = _parent->getPhysicsEngine()->rayTest(Converter::convert(player->getSceneNode()->getPosition()), Converter::convert(_distanceNode->_getDerivedPosition()), PhysicsEngine::COL_NOPLAYER, 0.25);
+        if(result.collisionObject) {
+            _distanceNode->_setDerivedPosition(Converter::convert(result.hitPoint));
+            //Avoid graphical bugs
+            _distanceNode->setPosition(_distanceNode->getPosition() + _distanceNode->getPosition().normalisedCopy() * -0.1);
+        }
     }
 }
 

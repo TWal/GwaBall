@@ -66,23 +66,23 @@ void PhysicsEngine::changeState(int state) {
 btRigidBody* PhysicsEngine::addRigidBody(btRigidBody* body) {
     _bodies.insert(body);
     _shapes.insert(body->getCollisionShape());
-	_world->addRigidBody(body);
+    _world->addRigidBody(body);
     return body;
 }
 
 btRigidBody* PhysicsEngine::addRigidBody(btRigidBody* body, short group, short mask) {
     _bodies.insert(body);
     _shapes.insert(body->getCollisionShape());
-	_world->addRigidBody(body, group, mask);
+    _world->addRigidBody(body, group, mask);
     return body;
 }
 
 btRigidBody* PhysicsEngine::addRigidBody(float mass, btCollisionShape* shape, Ogre::SceneNode* node) {
-	return addRigidBody(PhysicsHelper::createRigidBody(mass, shape, node));
+    return addRigidBody(PhysicsHelper::createRigidBody(mass, shape, node));
 }
 
 btRigidBody* PhysicsEngine::addRigidBody(float mass, btCollisionShape* shape, Ogre::SceneNode* node, short group, short mask) {
-	return addRigidBody(PhysicsHelper::createRigidBody(mass, shape, node), group, mask);
+    return addRigidBody(PhysicsHelper::createRigidBody(mass, shape, node), group, mask);
 }
 
 btRigidBody* PhysicsEngine::addRigidBody(float mass, Ogre::Entity* entity, Ogre::SceneNode* node, RIGIDBODYTYPE type) {
@@ -113,3 +113,48 @@ btRigidBody* PhysicsEngine::addRigidBody(float mass, Ogre::Entity* entity, Ogre:
     return addRigidBody(mass, shape, node, group, mask);
 }
 
+PhysicsEngine::RayResult PhysicsEngine::rayTest(const btVector3& from, const btVector3& to, int filter, float radius) {
+    if(radius < FLT_EPSILON) {
+        btCollisionWorld::ClosestRayResultCallback callback(from, to);
+        callback.m_collisionFilterGroup = COL_RAYTEST;
+        callback.m_collisionFilterMask = filter;
+
+        _world->rayTest(from, to, callback);
+        RayResult result;
+        result.collisionObject = callback.m_collisionObject;
+        result.group = callback.m_collisionFilterGroup;
+        result.mask = callback.m_collisionFilterMask;
+        result.hitPoint = callback.m_hitPointWorld;
+        result.hitNormal = callback.m_hitNormalWorld;
+        result.rayFrom = callback.m_rayFromWorld;
+        result.rayTo = callback.m_rayToWorld;
+
+        return result;
+    } else {
+        btSphereShape sphere(radius);
+
+        btTransform transFrom;
+        transFrom.setIdentity();
+        transFrom.setOrigin(from + ((to - from).normalize() * (radius + 0.001)));
+
+        btTransform transTo;
+        transTo.setIdentity();
+        transTo.setOrigin(to);
+
+        btCollisionWorld::ClosestConvexResultCallback callback(from, to);
+        callback.m_collisionFilterGroup = COL_RAYTEST;
+        callback.m_collisionFilterMask = filter;
+        _world->convexSweepTest(&sphere, transFrom, transTo, callback);
+
+        RayResult result;
+        result.collisionObject = callback.m_hitCollisionObject;
+        result.group = callback.m_collisionFilterGroup;
+        result.mask = callback.m_collisionFilterMask;
+        result.hitPoint = callback.m_hitPointWorld;
+        result.hitNormal = callback.m_hitNormalWorld;
+        result.rayFrom = callback.m_convexFromWorld;
+        result.rayTo = callback.m_convexToWorld;
+
+        return result;
+    }
+}

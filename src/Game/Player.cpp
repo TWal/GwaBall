@@ -30,7 +30,7 @@ void Player::init() {
     _node->setPosition(0, 5, 0);
     _node->attachObject(_parent->getGraphicsEngine()->getSceneManager()->createEntity("Ball", "Ball.mesh"));
     _shape = new btSphereShape(BALL_RADIUS);
-    _body = _parent->getPhysicsEngine()->addRigidBody(0.5, _shape, _node);
+    _body = _parent->getPhysicsEngine()->addRigidBody(0.5, _shape, _node, PhysicsEngine::COL_PLAYER, PhysicsEngine::COL_ALL);
 }
 
 void Player::move(const btVector3& direction, double time) {

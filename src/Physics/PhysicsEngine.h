@@ -3,6 +3,7 @@
 
 #include "../Engine.h"
 #include <unordered_set>
+#include "../Utils.h"
 
 class Game;
 class btCollisionConfiguration;
@@ -12,6 +13,7 @@ class btConstraintSolver;
 class btDynamicsWorld;
 class btRigidBody;
 class btCollisionShape;
+class btCollisionObject;
 
 namespace Ogre {
     class SceneNode;
@@ -33,12 +35,36 @@ class PhysicsEngine : public Engine {
             RBT_TRIMESH
         };
 
-		btRigidBody* addRigidBody(btRigidBody* body);
-		btRigidBody* addRigidBody(btRigidBody* body, short group, short mask);
-		btRigidBody* addRigidBody(float mass, btCollisionShape* shape, Ogre::SceneNode* node);
-		btRigidBody* addRigidBody(float mass, btCollisionShape* shape, Ogre::SceneNode* node, short group, short mask);
-		btRigidBody* addRigidBody(float mass, Ogre::Entity* entity, Ogre::SceneNode* node, RIGIDBODYTYPE type);
-		btRigidBody* addRigidBody(float mass, Ogre::Entity* entity, Ogre::SceneNode* node, RIGIDBODYTYPE type, short group, short mask);
+        enum COLLISIONGROUP {
+            COL_NOTHING = 0,
+            COL_STATIC = bit(0),
+            COL_DYNAMIC = bit(1),
+            COL_PLAYER = bit(2),
+            COL_RAYTEST = bit(3),
+            COL_ALL = ~COL_NOTHING,
+            COL_NOSTATIC = ~COL_STATIC,
+            COL_NODYNAMIC = ~COL_DYNAMIC,
+            COL_NOPLAYER = ~COL_PLAYER,
+            COL_NORAYTEST = ~COL_RAYTEST
+        };
+
+        struct RayResult {
+            const btCollisionObject* collisionObject;
+            btVector3 hitNormal;
+            btVector3 hitPoint;
+            btVector3 rayFrom;
+            btVector3 rayTo;
+            short int group;
+            short int mask;
+        };
+
+        btRigidBody* addRigidBody(btRigidBody* body);
+        btRigidBody* addRigidBody(btRigidBody* body, short group, short mask);
+        btRigidBody* addRigidBody(float mass, btCollisionShape* shape, Ogre::SceneNode* node);
+        btRigidBody* addRigidBody(float mass, btCollisionShape* shape, Ogre::SceneNode* node, short group, short mask);
+        btRigidBody* addRigidBody(float mass, Ogre::Entity* entity, Ogre::SceneNode* node, RIGIDBODYTYPE type);
+        btRigidBody* addRigidBody(float mass, Ogre::Entity* entity, Ogre::SceneNode* node, RIGIDBODYTYPE type, short group, short mask);
+        RayResult rayTest(const btVector3& from, const btVector3& to, int filter, float radius);
 
     private:
         void _construct();
