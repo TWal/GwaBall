@@ -90,7 +90,7 @@ btRigidBody* PhysicsEngine::addRigidBody(float mass, btCollisionShape* shape, Og
 btRigidBody* PhysicsEngine::addRigidBody(float mass, Ogre::Entity* entity, Ogre::SceneNode* node, RIGIDBODYTYPE type) {
     btCollisionShape* shape = nullptr;
     if(type == RBT_TRIMESH) {
-        if(mass < FLT_EPSILON) {
+        if(mass <= FLT_EPSILON) {
             shape = PhysicsHelper::createBvhTriangleMeshShape(entity);
         } else {
             shape = PhysicsHelper::createGImpactMeshShape(entity);
@@ -104,7 +104,7 @@ btRigidBody* PhysicsEngine::addRigidBody(float mass, Ogre::Entity* entity, Ogre:
 btRigidBody* PhysicsEngine::addRigidBody(float mass, Ogre::Entity* entity, Ogre::SceneNode* node, RIGIDBODYTYPE type, short group, short mask) {
     btCollisionShape* shape = nullptr;
     if(type == RBT_TRIMESH) {
-        if(mass < FLT_EPSILON) {
+        if(mass <= FLT_EPSILON) {
             shape = PhysicsHelper::createBvhTriangleMeshShape(entity);
         } else {
             shape = PhysicsHelper::createGImpactMeshShape(entity);
@@ -116,7 +116,7 @@ btRigidBody* PhysicsEngine::addRigidBody(float mass, Ogre::Entity* entity, Ogre:
 }
 
 PhysicsEngine::RayResult PhysicsEngine::rayTest(const btVector3& from, const btVector3& to, int filter, float radius) {
-    if(radius < FLT_EPSILON) {
+    if(radius <= FLT_EPSILON) {
         btCollisionWorld::ClosestRayResultCallback callback(from, to);
         callback.m_collisionFilterGroup = COL_RAYTEST;
         callback.m_collisionFilterMask = filter;

@@ -57,11 +57,11 @@ void CameraManager::mouseMoved(const OIS::MouseEvent& arg) {
         }
     }
 
-    if((_distance - 0.01) < FLT_EPSILON) {
+    if((_distance - 0.01) <= FLT_EPSILON) {
         _distance = 0;
     }
     _distance += arg.state.Z.rel * WHEEL_DISTANCE / WHEEL_MAGIC;
-    if(_distance < FLT_EPSILON) {
+    if(_distance <= FLT_EPSILON) {
         _distance = 0.01;
     }
 }
