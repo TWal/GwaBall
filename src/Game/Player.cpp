@@ -90,3 +90,8 @@ float Player::_getAccFromN(float N) {
 Ogre::SceneNode* Player::getSceneNode() {
     return _node;
 }
+
+btRigidBody* Player::getBody() {
+    return _body;
+}
+

@@ -9,6 +9,7 @@ namespace Ogre {
     class Entity;
     class SceneNode;
 }
+class ObjectManager;
 class Player;
 
 class GameEngine : public Engine {
@@ -24,6 +25,7 @@ class GameEngine : public Engine {
         Player* getPlayer();
 
     private:
+        ObjectManager* _objmgr;
         Player* _player;
 };
 

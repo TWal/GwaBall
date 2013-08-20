@@ -1,0 +1,57 @@
+<?xml version="1.0" ?>
+<Map>
+    <Templates>
+        <Template name="Ground">
+            <Physics>
+                <Shape type="box">
+                    <HalfExtends x="25" y="0.25" z="25" />
+                </Shape>
+                <Properties mass="0" />
+            </Physics>
+            <Graphics>
+                <Properties mesh="GroundTest.mesh" />
+            </Graphics>
+        </Template>
+        <Template name="Box">
+            <Physics>
+                <Shape type="box">
+                    <HalfExtends x="1" y="1" z="1" />
+                </Shape>
+                <Properties mass="0.75" />
+            </Physics>
+            <Graphics>
+                <Properties mesh="BoxTest.mesh" />
+            </Graphics>
+        </Template>
+    </Templates>
+
+    <Objects>
+        <Player>
+            <Position x="0" y="5" z="0" />
+        </Player>
+        <Template name="Ground">
+            <Transform>
+                <Position x="0" y="0" z="0" />
+                <Rotation x="0" y="0" z="0" />
+            </Transform>
+        </Template>
+        <Template name="Box">
+            <Transform>
+                <Position x="5" y="5" z="5" />
+                <Rotation x="0" y="0" z="0" />
+            </Transform>
+            <Transform>
+                <Position x="5" y="5" z="-5" />
+                <Rotation x="0" y="0" z="0" />
+            </Transform>
+            <Transform>
+                <Position x="-5" y="5" z="5" />
+                <Rotation x="0" y="0" z="0" />
+            </Transform>
+            <Transform>
+                <Position x="-5" y="5" z="-5" />
+                <Rotation x="0" y="0" z="0" />
+            </Transform>
+        </Template>
+    </Objects>
+</Map>

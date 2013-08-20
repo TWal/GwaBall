@@ -11,10 +11,12 @@
 #include "Player.h"
 #include "../Utils.h"
 #include "../Logger.h"
+#include "ObjectManager.h"
 
 GameEngine::GameEngine(Game* parent) : Engine(parent) {
     _log = new Logger(Logger::INFO, Logger::STDERR | Logger::LOGFILE, "Logs/GameEngine.log");
     _log->info("Creating player");
+    _objmgr = new ObjectManager(this);
     _player = new Player(this);
 }
 
@@ -22,18 +24,8 @@ GameEngine::~GameEngine() {
 }
 
 void GameEngine::init() {
-    btCollisionShape* fixedBoxShape = new btBoxShape(btVector3(25, 0.25, 25));
-    Ogre::SceneNode* fixedBoxNode = _graphics->getSceneManager()->getRootSceneNode()->createChildSceneNode();
-    fixedBoxNode->attachObject(_graphics->getSceneManager()->createEntity("FixedBox", "GroundTest.mesh"));
-    fixedBoxNode->setPosition(0, 0, 0);
-    _physics->addRigidBody(0.0, fixedBoxShape, fixedBoxNode, PhysicsEngine::COL_STATIC, PhysicsEngine::COL_ALL);
-
-    btCollisionShape* fallingBoxShape = new btBoxShape(btVector3(1, 1, 1));
-    Ogre::SceneNode* fallingBoxNode = _graphics->getSceneManager()->getRootSceneNode()->createChildSceneNode();
-    fallingBoxNode->attachObject(_graphics->getSceneManager()->createEntity("FallingBox", "BoxTest.mesh"));
-    fallingBoxNode->setPosition(0, 5, -1);
-    _physics->addRigidBody(2.0, fallingBoxShape, fallingBoxNode, PhysicsEngine::COL_DYNAMIC, PhysicsEngine::COL_ALL);
     _player->init();
+    _objmgr->load("Test.xml");
 }
 
 void GameEngine::frame(double time) {

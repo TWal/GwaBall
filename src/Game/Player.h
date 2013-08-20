@@ -20,6 +20,7 @@ class Player {
         void reset();
 
         Ogre::SceneNode* getSceneNode();
+        btRigidBody* getBody();
 
     private:
         float _getNFromVel(float vel);

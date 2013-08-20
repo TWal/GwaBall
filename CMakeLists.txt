@@ -14,6 +14,10 @@ find_package(Bullet REQUIRED)
 include_directories(${BULLET_INCLUDE_DIRS})
 list(APPEND LIBS ${BULLET_LIBRARIES})
 
+find_package(PugiXML REQUIRED)
+include_directories(${PUGIXML_INCLUDE_DIRS})
+list(APPEND LIBS ${PUGIXML_LIBRARIES})
+
 foreach(lib OGRE OIS)
     find_package(${lib} REQUIRED)
     include_directories(${${lib}_INCLUDE_DIRS})

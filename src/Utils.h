@@ -5,6 +5,7 @@
 #include <OgreVector3.h>
 #include <LinearMath/btVector3.h>
 #include <LinearMath/btQuaternion.h>
+#include <pugixml.hpp>
 
 constexpr int bit(char x) {
     return 1 << x;
@@ -31,6 +32,12 @@ class Converter {
         {
             return Ogre::Quaternion(quaternion.w(), quaternion.x(), quaternion.y(), quaternion.z());
         }
+};
+
+class XmlUtils {
+    public:
+        static btVector3 getBtVector(pugi::xml_node element);
+        static Ogre::Vector3 getOgreVector(pugi::xml_node element);
 };
 
 #endif
