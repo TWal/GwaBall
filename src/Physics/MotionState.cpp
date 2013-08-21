@@ -10,14 +10,14 @@ MotionState::~MotionState() {
 }
 
 void MotionState::getWorldTransform(btTransform& worldTrans) const {
-    worldTrans.setOrigin(Converter::convert(_node->getPosition()));
-    worldTrans.setRotation(Converter::convert(_node->getOrientation()));
+    worldTrans.setOrigin(Utils::convert(_node->getPosition()));
+    worldTrans.setRotation(Utils::convert(_node->getOrientation()));
 }
 
 void MotionState::setWorldTransform(const btTransform& worldTrans) {
     if(_node) {
-        _node->setOrientation(Converter::convert(worldTrans.getRotation()));
-        _node->setPosition(Converter::convert(worldTrans.getOrigin()));
+        _node->setOrientation(Utils::convert(worldTrans.getRotation()));
+        _node->setPosition(Utils::convert(worldTrans.getOrigin()));
     }
 }
 

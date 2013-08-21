@@ -19,23 +19,25 @@ Object::Object(ObjectManager* parent, size_t id, ObjectTemplate* objTemplate) :
 }
 
 Object::~Object() {
+    Utils::deleteOgreNode(_node);
+    _parent->parent()->getPhysicsEngine()->deleteRigidBody(_body);
 }
 
 void Object::load(pugi::xml_node root, Logger* log) {
     _node = _parent->parent()->getGraphicsEngine()->getSceneManager()->getRootSceneNode()->createChildSceneNode();
     _node->attachObject(_parent->parent()->getGraphicsEngine()->getSceneManager()->createEntity(_template->getName() + std::to_string(_id), _template->getEntityPath()));
     if(pugi::xml_node pos = root.child("Position")) {
-        _node->setPosition(XmlUtils::getOgreVector(pos));
+        _node->setPosition(Utils::getOgreVector(pos));
     } else {
         log->error("/Transform/Position does not exists, aborting");
         return;
     }
 
     if(pugi::xml_node rotNode = root.child("Rotation")) {
-        Ogre::Vector3 rot = XmlUtils::getOgreVector(rotNode);
+        Ogre::Vector3 rot = Utils::getOgreVector(rotNode);
         btQuaternion rotation = btQuaternion::getIdentity();
         rotation.setEuler(Ogre::Math::DegreesToRadians(rot.y), Ogre::Math::DegreesToRadians(rot.x), Ogre::Math::DegreesToRadians(rot.z));
-        _node->setOrientation(Converter::convert(rotation));
+        _node->setOrientation(Utils::convert(rotation));
     }
 
     _group = _template->getMass() <= FLT_EPSILON ? PhysicsEngine::COL_STATIC : PhysicsEngine::COL_DYNAMIC;

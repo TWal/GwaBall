@@ -16,9 +16,9 @@ class Logger {
             FATAL
         };
         enum OUTPUT {
-            STDOUT = bit(0),
-            STDERR = bit(1),
-            LOGFILE = bit(2)
+            STDOUT = Utils::bit(0),
+            STDERR = Utils::bit(1),
+            LOGFILE = Utils::bit(2)
         };
         Logger(PRIORITY minPrio, char output, const char* file = "");
         ~Logger();

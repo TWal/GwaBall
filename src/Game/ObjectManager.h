@@ -17,6 +17,8 @@ class ObjectManager {
         void load(const std::string& file);
         void load(pugi::xml_node root);
 
+        void clear();
+
         GameEngine* parent();
     private:
         size_t _getNextTemplateId();

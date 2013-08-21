@@ -37,10 +37,10 @@ class PhysicsEngine : public Engine {
 
         enum COLLISIONGROUP {
             COL_NOTHING = 0,
-            COL_STATIC = bit(0),
-            COL_DYNAMIC = bit(1),
-            COL_PLAYER = bit(2),
-            COL_RAYTEST = bit(3),
+            COL_STATIC = Utils::bit(0),
+            COL_DYNAMIC = Utils::bit(1),
+            COL_PLAYER = Utils::bit(2),
+            COL_RAYTEST = Utils::bit(3),
             COL_ALL = ~COL_NOTHING,
             COL_NOSTATIC = ~COL_STATIC,
             COL_NODYNAMIC = ~COL_DYNAMIC,
@@ -54,8 +54,8 @@ class PhysicsEngine : public Engine {
             btVector3 hitPoint;
             btVector3 rayFrom;
             btVector3 rayTo;
-            short int group;
-            short int mask;
+            short group;
+            short mask;
         };
 
         btRigidBody* addRigidBody(btRigidBody* body);
@@ -64,6 +64,9 @@ class PhysicsEngine : public Engine {
         btRigidBody* addRigidBody(float mass, btCollisionShape* shape, Ogre::SceneNode* node, short group, short mask);
         btRigidBody* addRigidBody(float mass, Ogre::Entity* entity, Ogre::SceneNode* node, RIGIDBODYTYPE type);
         btRigidBody* addRigidBody(float mass, Ogre::Entity* entity, Ogre::SceneNode* node, RIGIDBODYTYPE type, short group, short mask);
+        void registerCollisionShape(btCollisionShape* shape);
+        void deleteRigidBody(btRigidBody* body, bool deleteShape = false);
+        void deleteCollisionShape(btCollisionShape* shape);
         RayResult rayTest(const btVector3& from, const btVector3& to, int filter, float radius);
 
     private:

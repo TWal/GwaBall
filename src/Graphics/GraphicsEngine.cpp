@@ -52,6 +52,8 @@ GraphicsEngine::GraphicsEngine(Game* parent) : Engine(parent) {
 }
 
 GraphicsEngine::~GraphicsEngine() {
+    delete _log;
+    delete _cameraMgr;
     delete _root;
 }
 

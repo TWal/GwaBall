@@ -7,6 +7,7 @@
 #include "ObjectManager.h"
 #include "GameEngine.h"
 #include "../Physics/PhysicsHelper.h"
+#include "../Physics/PhysicsEngine.h"
 #include "../Graphics/GraphicsEngine.h"
 #include "../Utils.h"
 
@@ -20,6 +21,7 @@ ObjectTemplate::ObjectTemplate(ObjectManager* parent, size_t id) :
 }
 
 ObjectTemplate::~ObjectTemplate() {
+    _parent->parent()->getPhysicsEngine()->deleteCollisionShape(_shape);
 }
 
 void ObjectTemplate::load(const std::string& file, Logger* log) {
@@ -115,7 +117,7 @@ const std::string& ObjectTemplate::getEntityPath() {
 btCollisionShape* ObjectTemplate::_getCollisionShapeFromElement(pugi::xml_node element) {
     std::string type = element.attribute("type").value();
     if(type == "box") {
-        return new btBoxShape(XmlUtils::getBtVector(element.child("HalfExtends")));
+        return new btBoxShape(Utils::getBtVector(element.child("HalfExtends")));
     } else if(type == "convex") {
         std::string path;
         if(element.child("Mesh") && element.child("Mesh").attribute("path")) {

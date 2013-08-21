@@ -23,6 +23,9 @@ Player::Player(GameEngine* parent) :
 }
 
 Player::~Player() {
+    _parent->getPhysicsEngine()->deleteRigidBody(_body);
+    _parent->getPhysicsEngine()->deleteCollisionShape(_shape);
+    Utils::deleteOgreNode(_node);
 }
 
 void Player::init() {

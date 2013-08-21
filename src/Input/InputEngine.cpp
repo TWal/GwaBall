@@ -12,6 +12,7 @@ InputEngine::InputEngine(Game* parent) : Engine(parent) {
 }
 
 InputEngine::~InputEngine() {
+    delete _log;
     _destroy();
 }
 

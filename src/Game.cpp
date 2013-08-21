@@ -30,10 +30,14 @@ Game::Game() {
 
     _log->info("Initializing clock");
     _time = std::chrono::high_resolution_clock::now();
+
+    _state = -1;
 }
 
 Game::~Game() {
     _log->info("Deleting engines");
+    delete _log;
+    delete _input;
     delete _game;
     delete _physics;
     delete _graphics;

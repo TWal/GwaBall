@@ -28,6 +28,7 @@ void PhysicsEngine::_construct() {
 }
 
 void PhysicsEngine::_destroy() {
+    delete _log;
     delete _world;
     delete _collisionConfiguration;
     delete _dispatcher;
@@ -67,14 +68,14 @@ void PhysicsEngine::changeState(int state) {
 
 btRigidBody* PhysicsEngine::addRigidBody(btRigidBody* body) {
     _bodies.insert(body);
-    _shapes.insert(body->getCollisionShape());
+    registerCollisionShape(body->getCollisionShape());
     _world->addRigidBody(body);
     return body;
 }
 
 btRigidBody* PhysicsEngine::addRigidBody(btRigidBody* body, short group, short mask) {
     _bodies.insert(body);
-    _shapes.insert(body->getCollisionShape());
+    registerCollisionShape(body->getCollisionShape());
     _world->addRigidBody(body, group, mask);
     return body;
 }
@@ -113,6 +114,37 @@ btRigidBody* PhysicsEngine::addRigidBody(float mass, Ogre::Entity* entity, Ogre:
         shape = PhysicsHelper::createConvexHullShape(entity);
     }
     return addRigidBody(mass, shape, node, group, mask);
+}
+
+void PhysicsEngine::registerCollisionShape(btCollisionShape* shape) {
+    _shapes.insert(shape);
+}
+
+void PhysicsEngine::deleteRigidBody(btRigidBody* body, bool deleteShape) {
+    if(deleteShape) {
+        deleteCollisionShape(body->getCollisionShape());
+    }
+
+    auto it = _bodies.find(body);
+    if(it == _bodies.end()) {
+        _log->error("The body to delete is not registered");
+        return;
+    }
+
+    _world->removeRigidBody(body);
+    delete body->getMotionState();
+    _bodies.erase(it);
+    delete body;
+}
+
+void PhysicsEngine::deleteCollisionShape(btCollisionShape* shape) {
+    auto it = _shapes.find(shape);
+    if(it == _shapes.end()) {
+        _log->error("The collision shape to delete is not registered");
+        return;
+    }
+    _shapes.erase(it);
+    delete shape;
 }
 
 PhysicsEngine::RayResult PhysicsEngine::rayTest(const btVector3& from, const btVector3& to, int filter, float radius) {

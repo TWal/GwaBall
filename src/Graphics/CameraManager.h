@@ -14,6 +14,7 @@ namespace Ogre {
 class CameraManager : public InputListener {
     public:
         CameraManager(GraphicsEngine* parent);
+        ~CameraManager();
         void update();
         virtual void mouseMoved(const OIS::MouseEvent& arg);
         Ogre::Camera* getCamera();

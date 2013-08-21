@@ -21,6 +21,9 @@ GameEngine::GameEngine(Game* parent) : Engine(parent) {
 }
 
 GameEngine::~GameEngine() {
+    delete _log;
+    delete _objmgr;
+    delete _player;
 }
 
 void GameEngine::init() {
@@ -30,7 +33,7 @@ void GameEngine::init() {
 
 void GameEngine::frame(double time) {
     if(!_pause) {
-        btVector3 lookingDir = Converter::convert(_graphics->getCameraManager()->getLookingDirection());
+        btVector3 lookingDir = Utils::convert(_graphics->getCameraManager()->getLookingDirection());
         lookingDir.setY(0);
         _player->frame(time);
         if(_input->getKeyboard()->isKeyDown(OIS::KC_UP)) {

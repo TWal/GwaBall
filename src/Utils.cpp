@@ -1,6 +1,8 @@
 #include "Utils.h"
+#include <OgreSceneNode.h>
+#include <OgreSceneManager.h>
 
-btVector3 XmlUtils::getBtVector(pugi::xml_node element) {
+btVector3 Utils::getBtVector(pugi::xml_node element) {
     btVector3 result(0, 0, 0);
 
 	if(element.attribute("x")) {
@@ -16,7 +18,7 @@ btVector3 XmlUtils::getBtVector(pugi::xml_node element) {
 	return result;
 }
 
-Ogre::Vector3 XmlUtils::getOgreVector(pugi::xml_node element) {
+Ogre::Vector3 Utils::getOgreVector(pugi::xml_node element) {
     Ogre::Vector3 result(0, 0, 0);
 
 	if(element.attribute("x")) {
@@ -30,5 +32,13 @@ Ogre::Vector3 XmlUtils::getOgreVector(pugi::xml_node element) {
     }
 
 	return result;
+}
+
+void Utils::deleteOgreNode(Ogre::SceneNode* node) {
+    Ogre::SceneNode::ObjectIterator it = node->getAttachedObjectIterator();
+    while(it.hasMoreElements()) {
+        node->getCreator()->destroyMovableObject(it.getNext());
+    }
+    node->getCreator()->destroySceneNode(node);
 }
 

@@ -28,15 +28,22 @@ CameraManager::CameraManager(GraphicsEngine* parent) : _parent(parent) {
     _camera->lookAt(0, 0, 0);
 }
 
+CameraManager::~CameraManager() {
+    Utils::deleteOgreNode(_distanceNode);
+    Utils::deleteOgreNode(_pitchNode);
+    Utils::deleteOgreNode(_yawNode);
+    Utils::deleteOgreNode(_toPlayerNode);
+}
+
 void CameraManager::update() {
     _distanceNode->setPosition(Ogre::Vector3(0, 0, _distance));
     Player* player = _parent->getGameEngine()->getPlayer();
     if(player && player->getSceneNode()) {
         _toPlayerNode->setPosition(player->getSceneNode()->getPosition());
         //TODO: avoid magic constants, 0.25 is the half of the player's radius
-        PhysicsEngine::RayResult result = _parent->getPhysicsEngine()->rayTest(Converter::convert(player->getSceneNode()->getPosition()), Converter::convert(_distanceNode->_getDerivedPosition()), PhysicsEngine::COL_NOPLAYER, 0.25);
+        PhysicsEngine::RayResult result = _parent->getPhysicsEngine()->rayTest(Utils::convert(player->getSceneNode()->getPosition()), Utils::convert(_distanceNode->_getDerivedPosition()), PhysicsEngine::COL_NOPLAYER, 0.25);
         if(result.collisionObject) {
-            _distanceNode->_setDerivedPosition(Converter::convert(result.hitPoint));
+            _distanceNode->_setDerivedPosition(Utils::convert(result.hitPoint));
             //Avoid graphical bugs
             _distanceNode->setPosition(_distanceNode->getPosition() + _distanceNode->getPosition().normalisedCopy() * -0.1);
         }

@@ -12,6 +12,8 @@ ObjectManager::ObjectManager(GameEngine* parent) {
 }
 
 ObjectManager::~ObjectManager() {
+    delete _log;
+    clear();
 }
 
 void ObjectManager::load(const std::string& file) {
@@ -59,7 +61,7 @@ void ObjectManager::load(pugi::xml_node root) {
 
         if(pugi::xml_node playerNode = objectsNode.child("Player")) {
             if(pugi::xml_node position = playerNode.child("Position")) {
-                _parent->getPlayer()->getBody()->getWorldTransform().setOrigin(XmlUtils::getBtVector(position));
+                _parent->getPlayer()->getBody()->getWorldTransform().setOrigin(Utils::getBtVector(position));
             } else {
                 _log->error("/Map/Objects/Player/Position does not exists, aborting");
                 return;
@@ -72,6 +74,18 @@ void ObjectManager::load(pugi::xml_node root) {
         _log->error("/Map/Objects does not exists, aborting");
         return;
     }
+}
+
+void ObjectManager::clear() {
+    for(Object* obj : _objects) {
+        delete obj;
+    }
+    _objects.clear();
+
+    for(ObjectTemplate* tmpl : _templates) {
+        delete tmpl;
+    }
+    _templates.clear();
 }
 
 GameEngine* ObjectManager::parent() {
