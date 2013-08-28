@@ -4,6 +4,7 @@
 #include "Object.h"
 #include "GameEngine.h"
 #include "Player.h"
+#include "../Script/ScriptEngine.h"
 #include <BulletDynamics/Dynamics/btRigidBody.h>
 
 ObjectManager::ObjectManager(GameEngine* parent) {
@@ -74,6 +75,23 @@ void ObjectManager::load(pugi::xml_node root) {
         _log->error("/Map/Objects does not exists, aborting");
         return;
     }
+
+    if(pugi::xml_node scriptsNode = root.child("Scripts")) {
+        for(pugi::xml_node node : scriptsNode.children("Script")) {
+            if(pugi::xml_attribute classAttr = node.attribute("class")) {
+                if(pugi::xml_attribute pathAttr = node.attribute("path")) {
+                    _parent->getScriptEngine()->loadFile(std::string("data/Scripts/") + pathAttr.value(), classAttr.value());
+                    _parent->getScriptEngine()->instanciateScript(classAttr.value());
+                } else {
+                    _log->error("/Map/Scripts/Script/@path does not exists, aborting");
+                    return;
+                }
+            } else {
+                _log->error("/Map/Scripts/Script/@class does not exists, aborting");
+                return;
+            }
+        }
+    } //No else: it is not required
 }
 
 void ObjectManager::clear() {

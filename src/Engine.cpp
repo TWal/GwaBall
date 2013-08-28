@@ -4,6 +4,7 @@ Engine::Engine(Game *parent) :
     _parent(parent),
     _input(nullptr),
     _game(nullptr),
+    _script(nullptr),
     _physics(nullptr),
     _graphics(nullptr),
     _pause(false) {
@@ -12,9 +13,10 @@ Engine::Engine(Game *parent) :
 Engine::~Engine() {
 }
 
-void Engine::attachEngines(InputEngine* input, GameEngine* game, PhysicsEngine* physics, GraphicsEngine* graphics) {
+void Engine::attachEngines(InputEngine* input, GameEngine* game, ScriptEngine* script, PhysicsEngine* physics, GraphicsEngine* graphics) {
     _input = input;
     _game = game;
+    _script = script;
     _physics = physics;
     _graphics = graphics;
 }
@@ -41,6 +43,10 @@ InputEngine* Engine::getInputEngine() {
 
 GameEngine* Engine::getGameEngine() {
     return _game;
+}
+
+ScriptEngine* Engine::getScriptEngine() {
+    return _script;
 }
 
 PhysicsEngine* Engine::getPhysicsEngine() {

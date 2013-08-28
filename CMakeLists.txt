@@ -18,13 +18,18 @@ find_package(PugiXML REQUIRED)
 include_directories(${PUGIXML_INCLUDE_DIRS})
 list(APPEND LIBS ${PUGIXML_LIBRARIES})
 
+find_package(AngelScript REQUIRED)
+include_directories(${ANGELSCRIPT_INCLUDE_DIRS})
+list(APPEND LIBS ${ANGELSCRIPT_LIBRARY})
+
 foreach(lib OGRE OIS)
     find_package(${lib} REQUIRED)
     include_directories(${${lib}_INCLUDE_DIRS})
     list(APPEND LIBS ${${lib}_LIBRARIES})
 endforeach()
 
-file(GLOB_RECURSE sources_files src/*)
+file(GLOB_RECURSE sources_files src/* thirdparty/*)
+include_directories(thirdparty)
 
 add_executable(${PROJECT_NAME} ${sources_files})
 

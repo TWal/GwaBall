@@ -5,6 +5,7 @@ class Game;
 class Logger;
 class InputEngine;
 class GameEngine;
+class ScriptEngine;
 class PhysicsEngine;
 class GraphicsEngine;
 
@@ -22,11 +23,12 @@ class Engine {
         void setPause(bool pause);
         bool getPause();
 
-        void attachEngines(InputEngine* input, GameEngine* game, PhysicsEngine* physics, GraphicsEngine* graphics);
+        void attachEngines(InputEngine* input, GameEngine* game, ScriptEngine* script, PhysicsEngine* physics, GraphicsEngine* graphics);
 
         Game* parent();
         InputEngine* getInputEngine();
         GameEngine* getGameEngine();
+        ScriptEngine* getScriptEngine();
         PhysicsEngine* getPhysicsEngine();
         GraphicsEngine* getGraphicsEngine();
 
@@ -35,6 +37,7 @@ class Engine {
         Logger* _log;
         InputEngine* _input;
         GameEngine* _game;
+        ScriptEngine* _script;
         PhysicsEngine* _physics;
         GraphicsEngine* _graphics;
         bool _pause;

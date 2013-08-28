@@ -9,6 +9,7 @@
 #include "../Physics/PhysicsHelper.h"
 #include "../Physics/PhysicsEngine.h"
 #include "../Graphics/GraphicsEngine.h"
+#include "../Script/ScriptEngine.h"
 #include "../Utils.h"
 
 ObjectTemplate::ObjectTemplate(ObjectManager* parent, size_t id) :
@@ -92,6 +93,22 @@ void ObjectTemplate::load(pugi::xml_node root, Logger* log) {
         log->error("/Template/Physics does not exists, aborting");
         return;
     }
+
+    if(pugi::xml_node scriptNode = root.child("Script")) {
+        if(pugi::xml_attribute classAttr = scriptNode.attribute("class")) {
+            if(pugi::xml_attribute pathAttr = scriptNode.attribute("path")) {
+                _scriptClass = classAttr.value();
+                _scriptPath = pathAttr.value();
+                _parent->parent()->getScriptEngine()->loadFile("data/Scripts/" + _scriptPath, _scriptClass);
+            } else {
+                log->error("/Template/Script/@path does not exists, aborting");
+                return;
+            }
+        } else {
+            log->error("/Template/Script/@class does not exists, aborting");
+            return;
+        }
+    }
 }
 
 size_t ObjectTemplate::getId() {
@@ -112,6 +129,14 @@ float ObjectTemplate::getMass() {
 
 const std::string& ObjectTemplate::getEntityPath() {
     return _entityPath;
+}
+
+bool ObjectTemplate::hasScript() {
+    return !(_scriptClass.empty() || _scriptPath.empty());
+}
+
+const std::string& ObjectTemplate::getScriptClass() {
+    return _scriptClass;
 }
 
 btCollisionShape* ObjectTemplate::_getCollisionShapeFromElement(pugi::xml_node element) {

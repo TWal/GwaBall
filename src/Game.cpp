@@ -2,6 +2,7 @@
 
 #include "Input/InputEngine.h"
 #include "Game/GameEngine.h"
+#include "Script/ScriptEngine.h"
 #include "Graphics/GraphicsEngine.h"
 #include "Physics/PhysicsEngine.h"
 #include "Logger.h"
@@ -13,18 +14,21 @@ Game::Game() {
     _log->info("Creating engines");
     _input = new InputEngine(this);
     _game = new GameEngine(this);
+    _script = new ScriptEngine(this);
     _physics = new PhysicsEngine(this);
     _graphics = new GraphicsEngine(this);
 
     _log->info("Attaching engines");
-    _input->attachEngines(_input, _game, _physics, _graphics);
-    _game->attachEngines(_input, _game, _physics, _graphics);
-    _physics->attachEngines(_input, _game, _physics, _graphics);
-    _graphics->attachEngines(_input, _game, _physics, _graphics);
+    _input->attachEngines(_input, _game, _script, _physics, _graphics);
+    _game->attachEngines(_input, _game, _script, _physics, _graphics);
+    _script->attachEngines(_input, _game, _script, _physics, _graphics);
+    _physics->attachEngines(_input, _game, _script, _physics, _graphics);
+    _graphics->attachEngines(_input, _game, _script, _physics, _graphics);
 
     _log->info("Initializing engines");
     _input->init();
     _game->init();
+    _script->init();
     _physics->init();
     _graphics->init();
 
@@ -39,6 +43,7 @@ Game::~Game() {
     delete _log;
     delete _input;
     delete _game;
+    delete _script;
     delete _physics;
     delete _graphics;
 }
@@ -53,6 +58,7 @@ void Game::run() {
 
         _input->frame(elapsedTime);
         _game->frame(elapsedTime);
+        _script->frame(elapsedTime);
         _physics->frame(elapsedTime);
         _graphics->frame(elapsedTime);
 
@@ -72,6 +78,7 @@ void Game::changeState(int state) {
     _log->info("Changing state from %d to %d", _state, state);
     _state = state;
     _game->changeState(state);
+    _script->changeState(state);
     _physics->changeState(state);
     _graphics->changeState(state);
     switch(state) {

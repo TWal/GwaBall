@@ -5,6 +5,7 @@
 
 class InputEngine;
 class GameEngine;
+class ScriptEngine;
 class PhysicsEngine;
 class GraphicsEngine;
 class Logger;
@@ -31,6 +32,7 @@ class Game {
 
         InputEngine* _input;
         GameEngine* _game;
+        ScriptEngine* _script;
         PhysicsEngine* _physics;
         GraphicsEngine* _graphics;
 

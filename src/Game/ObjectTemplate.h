@@ -21,6 +21,8 @@ class ObjectTemplate {
         const std::string& getEntityPath();
         float getMass();
         btCollisionShape* getShape();
+        bool hasScript();
+        const std::string& getScriptClass();
     private:
         btCollisionShape* _getCollisionShapeFromElement(pugi::xml_node element);
         ObjectManager* _parent;
@@ -31,6 +33,9 @@ class ObjectTemplate {
 
         float _mass;
         btCollisionShape* _shape;
+
+        std::string _scriptClass;
+        std::string _scriptPath;
 };
 
 #endif

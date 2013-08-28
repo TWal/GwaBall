@@ -5,6 +5,7 @@
 #include "../Utils.h"
 #include "../Graphics/GraphicsEngine.h"
 #include "../Physics/PhysicsEngine.h"
+#include "../Script/ScriptEngine.h"
 #include "GameEngine.h"
 #include "ObjectManager.h"
 #include "../Logger.h"
@@ -44,5 +45,9 @@ void Object::load(pugi::xml_node root, Logger* log) {
     _mask = _template->getMass() <= FLT_EPSILON ? PhysicsEngine::COL_NOSTATIC : PhysicsEngine::COL_ALL;
 
     _body = _parent->parent()->getPhysicsEngine()->addRigidBody(_template->getMass(), _template->getShape(), _node, _group, _mask);
+
+    if(_template->hasScript()) {
+        _parent->parent()->getScriptEngine()->instanciateScript(_template->getScriptClass(), _body);
+    }
 }
 

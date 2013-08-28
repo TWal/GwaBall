@@ -22,6 +22,7 @@
             <Graphics>
                 <Properties mesh="BoxTest.mesh" />
             </Graphics>
+            <Script class="PositionPrinter" path="PositionPrinter.as" />
         </Template>
     </Templates>
 
@@ -54,4 +55,8 @@
             </Transform>
         </Template>
     </Objects>
+
+    <Scripts>
+        <Script class="FramePrinter" path="FramePrinter.as" />
+    </Scripts>
 </Map>
