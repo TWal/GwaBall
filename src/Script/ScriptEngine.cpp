@@ -1,71 +1,118 @@
 #include "ScriptEngine.h"
 
 #include <angelscript.h>
+#include "../Game.h"
 #include "thirdparty/scriptstdstring/scriptstdstring.h"
 #include "thirdparty/scriptarray/scriptarray.h"
 #include "thirdparty/serializer/serializer.h"
+#include "thirdparty/scriptmath/scriptmath.h"
+#include "thirdparty/scriptmath/scriptmathcomplex.h"
 #include "../Logger.h"
 #include "../Physics/PhysicsEngine.h"
 #include <btBulletDynamicsCommon.h>
 #include "../Game/Player.h"
+#include "../Game/GameEngine.h"
 
-static void btVector3Constructor(btVector3* self) {
-    new(self) btVector3();
-}
+struct Vec3Wrapper {
+    float x, y, z;
+    Vec3Wrapper() : x(0.0), y(0.0), z(0.0) {}
+    Vec3Wrapper(const Vec3Wrapper& v) : x(v.x), y(v.y), z(v.z) {}
+    Vec3Wrapper(float pX, float pY, float pZ) : x(pX), y(pY), z(pZ) {}
+};
+static inline btVector3 convert(const Vec3Wrapper& v) { return btVector3(v.x, v.y, v.z); }
+static inline Vec3Wrapper convert(const btVector3& v) { return {v.x(), v.y(), v.z()}; }
+struct QuatWrapper {
+    float x, y, z, w;
+    QuatWrapper() : x(0.0), y(0.0), z(0.0), w(0.0) {}
+    QuatWrapper(const QuatWrapper& q) : x(q.x), y(q.y), z(q.z), w(q.w) {}
+    QuatWrapper(float pX, float pY, float pZ, float pW) : x(pX), y(pY), z(pZ), w(pW) {}
+};
+static inline btQuaternion convert(const QuatWrapper& q) { return btQuaternion(q.x, q.y, q.z, q.w); }
+static inline QuatWrapper convert(const btQuaternion& q) { return {q.x(), q.y(), q.z(), q.w()}; }
+struct TransWrapper {
+    Vec3Wrapper v;
+    QuatWrapper q;
+    TransWrapper() : v(), q() {}
+    TransWrapper(const TransWrapper& t) : v(t.v), q(t.q) {}
+    TransWrapper(const Vec3Wrapper& pV, const QuatWrapper& pQ) : v(pV), q(pQ) {}
+};
+static inline btTransform convert(const TransWrapper& t) { return btTransform(convert(t.q), convert(t.v)); }
+static inline TransWrapper convert(const btTransform& t) { return TransWrapper(convert(t.getOrigin()), convert(t.getRotation())); }
+struct RayResultWrapper {
+    btRigidBody* body;
+    Vec3Wrapper hitNormal;
+    Vec3Wrapper hitPoint;
+    RayResultWrapper(btRigidBody* b, const Vec3Wrapper& n, const Vec3Wrapper& p) : body(b), hitNormal(n), hitPoint(p) {}
+    RayResultWrapper(const RayResultWrapper& r) : body(r.body), hitNormal(r.hitNormal), hitPoint(r.hitPoint) {}
+};
+static inline RayResultWrapper convert(const PhysicsEngine::RayResult& r) { return RayResultWrapper((btRigidBody*)r.collisionObject, convert(r.hitNormal), convert(r.hitPoint)); }
 
-static void btVector3Constructor(const btVector3& other, btVector3* self) {
-    new(self) btVector3(other);
-}
+static void vec3Constructor(Vec3Wrapper* self) { new(self) Vec3Wrapper(); }
+static void vec3Constructor(const Vec3Wrapper& other, Vec3Wrapper* self) { new(self) Vec3Wrapper(other); }
+static void vec3Constructor(float x, float y, float z, Vec3Wrapper* self) { new(self) Vec3Wrapper(x, y, z); }
+static float vec3Length(const Vec3Wrapper& v) { return convert(v).length(); }
+static float vec3Length2(const Vec3Wrapper& v) { return convert(v).length2(); }
+static Vec3Wrapper vec3Normalized(const Vec3Wrapper& v) { return convert(convert(v).normalized()); }
+static float vec3Dot(const Vec3Wrapper& v, const Vec3Wrapper& o) { return convert(v).dot(convert(o)); }
+static Vec3Wrapper vec3Cross(const Vec3Wrapper& v, const Vec3Wrapper& o) { return convert(convert(v).cross(convert(o))); }
+static float vec3Angle(const Vec3Wrapper& v, const Vec3Wrapper& o) { return convert(v).angle(convert(o)); }
+static Vec3Wrapper vec3Lerp(const Vec3Wrapper& v, const Vec3Wrapper& o, float f) { return convert(convert(v).lerp(convert(o), f)); }
+static Vec3Wrapper vec3Rotate(const Vec3Wrapper& v, const Vec3Wrapper& o, float f) { return convert(convert(v).rotate(convert(o), f)); }
+static Vec3Wrapper vec3OpAdd(const Vec3Wrapper& v, const Vec3Wrapper& o) { return convert(convert(v) + convert(o)); }
+static Vec3Wrapper vec3OpSub(const Vec3Wrapper& v, const Vec3Wrapper& o) { return convert(convert(v) - convert(o)); }
+static Vec3Wrapper vec3OpMul(const Vec3Wrapper& v, const Vec3Wrapper& o) { return convert(convert(v) * convert(o)); }
+static Vec3Wrapper vec3OpMul(const Vec3Wrapper& v, float f) { return convert(convert(v) * f); }
+static QuatWrapper vec3OpMul(const Vec3Wrapper& v, const QuatWrapper& q) { return convert(convert(v) * convert(q)); }
+static Vec3Wrapper vec3OpDiv(const Vec3Wrapper& v, const Vec3Wrapper& o) { return convert(convert(v) / convert(o)); }
+static Vec3Wrapper vec3OpDiv(const Vec3Wrapper& v, float f) { return convert(convert(v) / f); }
+static bool vec3OpEquals(const Vec3Wrapper& v, const Vec3Wrapper& o) { return convert(v) == convert(o); }
 
-static void btVector3Constructor(float x, float y, float z, btVector3* self) {
-    new(self) btVector3(x, y, z);
-}
+static void quatConstructor(QuatWrapper* self) { new(self) QuatWrapper(); }
+static void quatConstructor(const QuatWrapper& other, QuatWrapper* self) { new(self) QuatWrapper(other); }
+static void quatConstructor(float x, float y, float z, float w, QuatWrapper* self) { new(self) QuatWrapper(x, y, z, w); }
+static void quatConstructor(const Vec3Wrapper& v, float f, QuatWrapper* self) { new(self) QuatWrapper(convert(btQuaternion(convert(v), f))); }
+static void quatConstructor(float y, float p, float r, QuatWrapper* self) { new(self) QuatWrapper(convert(btQuaternion(y, p, r))); }
+static float quatLength(const QuatWrapper& q) { return convert(q).length(); }
+static float quatLength2(const QuatWrapper& q) { return convert(q).length2(); }
+static QuatWrapper quatNormalized(const QuatWrapper& q) { return convert(convert(q).normalized()); }
+static float quatDot(const QuatWrapper& q, const QuatWrapper& o) { return convert(q).dot(convert(o)); }
+static float quatAngle(const QuatWrapper& q, const QuatWrapper& o) { return convert(q).angle(convert(o)); }
+static float quatGetAngle(const QuatWrapper& q) { return convert(q).getAngle(); }
+static QuatWrapper quatOpAdd(const QuatWrapper& q, const QuatWrapper& o) { return convert(convert(q) + convert(o)); }
+static QuatWrapper quatOpSub(const QuatWrapper& q, const QuatWrapper& o) { return convert(convert(q) - convert(o)); }
+static QuatWrapper quatOpNeg(const QuatWrapper& q) { return convert(-convert(q)); }
+static QuatWrapper quatOpMul(const QuatWrapper& q, const QuatWrapper& o) { return convert(convert(q) * convert(o)); }
+static QuatWrapper quatOpMul(const QuatWrapper& q, const Vec3Wrapper& o) { return convert(convert(q) * convert(o)); }
+static QuatWrapper quatOpMul(const QuatWrapper& q, float f) { return convert(convert(q) * f); }
+static QuatWrapper quatOpDiv(const QuatWrapper& q, float f) { return convert(convert(q) / f); }
+static bool quatOpEquals(const QuatWrapper& q, const QuatWrapper& o) { return convert(q) == convert(o); }
 
-static void btQuaternionConstructor(btQuaternion* self) {
-    new(self) btQuaternion();
-}
+static void transConstructor(TransWrapper* self) { new(self) TransWrapper(); }
+static void transConstructor(const TransWrapper& t, TransWrapper* self) { new(self) TransWrapper(t); }
+static void transConstructor(const Vec3Wrapper& v, const QuatWrapper& q, TransWrapper* self) { new(self) TransWrapper(v, q); }
+static Vec3Wrapper transOpMul(const TransWrapper& t, const Vec3Wrapper& v) { return convert(convert(t) * convert(v)); }
+static QuatWrapper transOpMul(const TransWrapper& t, const QuatWrapper& q) { return convert(convert(t) * convert(q)); }
+static TransWrapper transOpMul(const TransWrapper& t, const TransWrapper& o) { return convert(convert(t) * convert(o)); }
+static bool transOpEquals(const TransWrapper& t, const TransWrapper& o) { return convert(t) == convert(o); }
 
-static void btQuaternionConstructor(const btQuaternion& other, btQuaternion* self) {
-    new(self) btQuaternion(other);
-}
+static Vec3Wrapper rigidBodyGetLinearVel(const btRigidBody* b) { return convert(b->getLinearVelocity()); }
+static void rigidBodySetLinearVel(btRigidBody* b, const Vec3Wrapper& v) { b->setLinearVelocity(convert(v)); }
+static Vec3Wrapper rigidBodyGetAngularVel(const btRigidBody* b) { return convert(b->getAngularVelocity()); }
+static void rigidBodySetAngularVel(btRigidBody* b, const Vec3Wrapper& v) { b->setAngularVelocity(convert(v)); }
+static TransWrapper rigidBodyGetTransform(const btRigidBody* b) { return convert(b->getWorldTransform()); }
+static void rigidBodySetTransform(btRigidBody* b, const TransWrapper& t) { b->setWorldTransform(convert(t)); }
+static Vec3Wrapper rigidBodyGetGravity(btRigidBody* b) { return convert(b->getGravity()); }
+static void rigidBodySetGravity(btRigidBody* b, const Vec3Wrapper& v) { b->setGravity(convert(v)); }
+static void rigidBodyApplyForce(btRigidBody* b, const Vec3Wrapper& v1, const Vec3Wrapper& v2) { b->applyForce(convert(v1), convert(v2)); }
+static void rigidBodyApplyCentralForce(btRigidBody* b, const Vec3Wrapper& v) { b->applyCentralForce(convert(v)); }
+static void rigidBodyApplyImpulse(btRigidBody* b, const Vec3Wrapper& v1, const Vec3Wrapper& v2) { b->applyImpulse (convert(v1), convert(v2)); }
+static void rigidBodyApplyCentralImpulse(btRigidBody* b, const Vec3Wrapper& v) { b->applyCentralImpulse(convert(v)); }
+static void rigidBodyApplyTorque(btRigidBody* b, const Vec3Wrapper& v) { b->applyTorque(convert(v)); }
+static void rigidBodyApplyTorqueImpulse(btRigidBody* b, const Vec3Wrapper& v) { b->applyTorqueImpulse(convert(v)); }
 
-static void btQuaternionConstructor(float x, float y, float z, float w, btQuaternion* self) {
-    new(self) btQuaternion(x, y, z, w);
-}
+static void rayResultConstructor(const RayResultWrapper& r, RayResultWrapper* self) { new(self) RayResultWrapper(r); }
 
-static void btQuaternionConstructor(const btVector3& axis, float angle, btQuaternion* self) {
-    new(self) btQuaternion(axis, angle);
-}
-
-static void btQuaternionConstructor(float yaw, float pitch, float roll, btQuaternion* self) {
-    new(self) btQuaternion(yaw, pitch, roll);
-}
-
-static void btTransformConstructor(btTransform* self) {
-    new(self) btTransform();
-}
-
-static void btTransformConstructor(const btTransform& other, btTransform* self) {
-    new(self) btTransform();
-}
-
-static void btTransformConstructor(const btVector3& v, const btQuaternion& q, btTransform* self) {
-    new(self) btTransform(q, v);
-}
-
-static void rayResultConstructor(const PhysicsEngine::RayResult& r, PhysicsEngine::RayResult* self) {
-    self->collisionObject = r.collisionObject;
-    self->hitNormal = r.hitNormal;
-    self->hitPoint = r.hitPoint;
-    self->rayFrom = r.rayFrom;
-    self->rayTo = r.rayTo;
-    self->group = r.group;
-    self->mask = r.mask;
-}
-
-static btRigidBody* rayResultGetBody(PhysicsEngine::RayResult& r) {
-    return (btRigidBody*)r.collisionObject;
-}
+static RayResultWrapper physicsEngineRayTest(PhysicsEngine* phy, const Vec3Wrapper& v1, const Vec3Wrapper& v2, int i, float f) { return convert(phy->rayTest(convert(v1), convert(v2), i, f)); }
 
 static void print(const std::string& str) {
     printf("%s", str.c_str());
@@ -107,114 +154,102 @@ ScriptEngine::ScriptEngine(Game* parent) : Engine(parent) {
     _engine->SetMessageCallback(asMETHOD(ScriptEngine, _messageCallback), this, asCALL_THISCALL);
     RegisterStdString(_engine);
     RegisterScriptArray(_engine, true);
+    RegisterScriptMath(_engine);
+    RegisterScriptMathComplex(_engine);
 
     _engine->RegisterObjectType("PhysicsEngine", sizeof(PhysicsEngine), asOBJ_REF | asOBJ_NOCOUNT);
+    _engine->RegisterObjectType("GameEngine", sizeof(GameEngine), asOBJ_REF | asOBJ_NOCOUNT);
     _engine->RegisterObjectType("RigidBody", sizeof(btRigidBody), asOBJ_REF | asOBJ_NOCOUNT);
-    _engine->RegisterObjectType("RayResult", sizeof(PhysicsEngine::RayResult), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_K);
+    _engine->RegisterObjectType("RayResult", sizeof(RayResultWrapper), asOBJ_VALUE | asOBJ_POD | asOBJ_APP_CLASS_K);
     _engine->RegisterObjectType("Player", sizeof(Player), asOBJ_REF | asOBJ_NOCOUNT);
-    _engine->RegisterObjectType("Vector3", sizeof(btVector3), asOBJ_VALUE | asOBJ_APP_CLASS_CK | asOBJ_POD);
-    _engine->RegisterObjectType("Quaternion", sizeof(btQuaternion), asOBJ_VALUE | asOBJ_APP_CLASS_CK | asOBJ_POD);
+    _engine->RegisterObjectType("Vec3", sizeof(Vec3Wrapper), asOBJ_VALUE | asOBJ_APP_CLASS_CK | asOBJ_POD);
+    _engine->RegisterObjectType("Quaternion", sizeof(QuatWrapper), asOBJ_VALUE | asOBJ_APP_CLASS_CK | asOBJ_POD);
     _engine->RegisterObjectType("Transform", sizeof(btTransform), asOBJ_VALUE | asOBJ_APP_CLASS_CK | asOBJ_POD);
 
     _engine->RegisterGlobalFunction("void print(const string& in)", asFUNCTION(print), asCALL_CDECL);
 
-    _engine->RegisterObjectMethod("PhysicsEngine", "RayResult rayTest(const Vector3& in, const Vector3& in, int, float)", asMETHOD(PhysicsEngine, rayTest), asCALL_THISCALL);
+    _engine->RegisterObjectMethod("PhysicsEngine", "RayResult rayTest(const Vec3& in, const Vec3& in, int, float)", asFUNCTION(physicsEngineRayTest), asCALL_CDECL_OBJFIRST);
 
-    _engine->RegisterObjectMethod("RigidBody", "const Vector3& get_linearVelocity() const", asMETHOD(btRigidBody, getLinearVelocity), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "void set_linearVelocity(const Vector3& in)", asMETHOD(btRigidBody, setLinearVelocity), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "const Vector3& get_angularVelocity() const", asMETHOD(btRigidBody, getAngularVelocity), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "void set_angularVelocity(const Vector3& in)", asMETHOD(btRigidBody, setAngularVelocity), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "const Transform& get_transform() const", asMETHODPR(btRigidBody, getWorldTransform, () const, const btTransform&), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "void set_transform(const Transform& in)", asMETHOD(btRigidBody, setWorldTransform), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "const Vector3& get_gravity() const", asMETHOD(btRigidBody, getGravity), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "void set_gravity(const Vector3& in)", asMETHOD(btRigidBody, setGravity), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "void applyForce(const Vector3& in, const Vector3& in)", asMETHOD(btRigidBody, applyForce), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "void applyCentralForce(const Vector3& in)", asMETHOD(btRigidBody, applyCentralForce), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "void applyImpulse(const Vector3& in, const Vector3& in)", asMETHOD(btRigidBody, applyImpulse), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "void applyCentralImpulse(const Vector3& in)", asMETHOD(btRigidBody, applyCentralImpulse), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "void applyTorque(const Vector3& in)", asMETHOD(btRigidBody, applyTorque), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("RigidBody", "void applyTorqueImpulse(const Vector3& in)", asMETHOD(btRigidBody, applyTorqueImpulse), asCALL_THISCALL);
+    _engine->RegisterObjectMethod("GameEngine", "Player@ get_player()", asMETHOD(GameEngine, getPlayer), asCALL_THISCALL);
+
+    _engine->RegisterObjectMethod("RigidBody", "Vec3 get_linearVelocity() const", asFUNCTION(rigidBodyGetLinearVel), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "void set_linearVelocity(const Vec3& in)", asFUNCTION(rigidBodySetLinearVel), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "Vec3 get_angularVelocity() const", asFUNCTION(rigidBodyGetAngularVel), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "void set_angularVelocity(const Vec3& in)", asFUNCTION(rigidBodySetAngularVel), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "Transform get_transform() const", asFUNCTION(rigidBodyGetTransform), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "void set_transform(const Transform& in)", asFUNCTION(rigidBodySetTransform), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "Vec3 get_gravity() const", asFUNCTION(rigidBodyGetGravity), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "void set_gravity(const Vec3& in)", asFUNCTION(rigidBodySetGravity), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "void applyForce(const Vec3& in, const Vec3& in)", asFUNCTION(rigidBodyApplyForce), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "void applyCentralForce(const Vec3& in)", asFUNCTION(rigidBodyApplyCentralForce), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "void applyImpulse(const Vec3& in, const Vec3& in)", asFUNCTION(rigidBodyApplyImpulse), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "void applyCentralImpulse(const Vec3& in)", asFUNCTION(rigidBodyApplyCentralImpulse), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "void applyTorque(const Vec3& in)", asFUNCTION(rigidBodyApplyTorque), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("RigidBody", "void applyTorqueImpulse(const Vec3& in)", asFUNCTION(rigidBodyApplyTorqueImpulse), asCALL_CDECL_OBJFIRST);
 
     _engine->RegisterObjectBehaviour("RayResult", asBEHAVE_CONSTRUCT, "void f(const RayResult& in)", asFUNCTION(rayResultConstructor), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectMethod("RayResult", "RigidBody@ get_body()", asFUNCTION(rayResultGetBody), asCALL_CDECL_OBJFIRST);
-    _engine->RegisterObjectProperty("RayResult", "Vector3 hitNormal", asOFFSET(PhysicsEngine::RayResult, hitNormal));
-    _engine->RegisterObjectProperty("RayResult", "Vector3 hitPoint", asOFFSET(PhysicsEngine::RayResult, hitPoint));
-    _engine->RegisterObjectProperty("RayResult", "Vector3 rayFrom", asOFFSET(PhysicsEngine::RayResult, rayFrom));
-    _engine->RegisterObjectProperty("RayResult", "Vector3 rayTo", asOFFSET(PhysicsEngine::RayResult, rayTo));
-    _engine->RegisterObjectProperty("RayResult", "int16 group", asOFFSET(PhysicsEngine::RayResult, group));
-    _engine->RegisterObjectProperty("RayResult", "int16 mask", asOFFSET(PhysicsEngine::RayResult, mask));
+    _engine->RegisterObjectProperty("RayResult", "RigidBody@ body", asOFFSET(RayResultWrapper, body));
+    _engine->RegisterObjectProperty("RayResult", "Vec3 hitNormal", asOFFSET(RayResultWrapper, hitNormal));
+    _engine->RegisterObjectProperty("RayResult", "Vec3 hitPoint", asOFFSET(RayResultWrapper, hitPoint));
 
     _engine->RegisterObjectMethod("Player", "RigidBody@ get_body()", asMETHOD(Player, getBody), asCALL_THISCALL);
 
-    _engine->RegisterObjectBehaviour("Vector3", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(btVector3Constructor, (btVector3*), void), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectBehaviour("Vector3", asBEHAVE_CONSTRUCT, "void f(const Vector3& in)", asFUNCTIONPR(btVector3Constructor, (const btVector3&, btVector3*), void), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectBehaviour("Vector3", asBEHAVE_CONSTRUCT, "void f(float, float, float)", asFUNCTIONPR(btVector3Constructor, (float, float, float, btVector3*), void), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectMethod("Vector3", "const float& get_x() const", asMETHOD(btVector3, getX), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "void set_x(float)", asMETHOD(btVector3, setX), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "const float& get_y() const", asMETHOD(btVector3, getY), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "void set_y(float)", asMETHOD(btVector3, setY), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "const float& get_z() const", asMETHOD(btVector3, getZ), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "void set_z(float)", asMETHOD(btVector3, setZ), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "float length() const", asMETHOD(btVector3, length), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "float length2() const", asMETHOD(btVector3, length2), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "Vector3 normalized() const", asMETHOD(btVector3, normalized), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "Vector3& normalize()", asMETHOD(btVector3, normalize), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "float dot(const Vector3& in) const", asMETHOD(btVector3, dot), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "Vector3 cross(const Vector3& in) const", asMETHOD(btVector3, cross), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "float angle(const Vector3& in) const", asMETHOD(btVector3, angle), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "Vector3 lerp(const Vector3& in, const float& in) const", asMETHOD(btVector3, lerp), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "Vector3 rotate(const Vector3& in, const float) const", asMETHOD(btVector3, rotate), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Vector3", "Vector3 opAdd(const Vector3& in) const", asFUNCTIONPR(operator+, (const btVector3&, const btVector3&), btVector3), asCALL_CDECL_OBJFIRST);
-    _engine->RegisterObjectMethod("Vector3", "Vector3 opSub(const Vector3& in) const", asFUNCTIONPR(operator-, (const btVector3&, const btVector3&), btVector3), asCALL_CDECL_OBJFIRST);
-    _engine->RegisterObjectMethod("Vector3", "Vector3 opMul(const Vector3& in) const", asFUNCTIONPR(operator*, (const btVector3&, const btVector3&), btVector3), asCALL_CDECL_OBJFIRST);
-    _engine->RegisterObjectMethod("Vector3", "Vector3 opMul(const float& in) const", asFUNCTIONPR(operator*, (const btVector3&, const btScalar&), btVector3), asCALL_CDECL_OBJFIRST);
-    _engine->RegisterObjectMethod("Vector3", "Quaternion opMul(const Quaternion& in) const", asFUNCTIONPR(operator*, (const btVector3&, const btQuaternion&), btQuaternion), asCALL_CDECL_OBJFIRST);
-    _engine->RegisterObjectMethod("Vector3", "Vector3 opDiv(const Vector3& in) const", asFUNCTIONPR(operator/, (const btVector3&, const btVector3&), btVector3), asCALL_CDECL_OBJFIRST);
-    _engine->RegisterObjectMethod("Vector3", "Vector3 opDiv(const float& in) const", asFUNCTIONPR(operator/, (const btVector3&, const btScalar&), btVector3), asCALL_CDECL_OBJFIRST);
-    _engine->RegisterObjectMethod("Vector3", "bool opEquals(const Vector3& in) const", asMETHOD(btVector3, operator==), asCALL_THISCALL);
+    _engine->RegisterObjectBehaviour("Vec3", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(vec3Constructor, (Vec3Wrapper*), void), asCALL_CDECL_OBJLAST);
+    _engine->RegisterObjectBehaviour("Vec3", asBEHAVE_CONSTRUCT, "void f(const Vec3& in)", asFUNCTIONPR(vec3Constructor, (const Vec3Wrapper&, Vec3Wrapper*), void), asCALL_CDECL_OBJLAST);
+    _engine->RegisterObjectBehaviour("Vec3", asBEHAVE_CONSTRUCT, "void f(float, float, float)", asFUNCTIONPR(vec3Constructor, (float, float, float, Vec3Wrapper*), void), asCALL_CDECL_OBJLAST);
+    _engine->RegisterObjectProperty("Vec3", "float x", asOFFSET(Vec3Wrapper, x));
+    _engine->RegisterObjectProperty("Vec3", "float y", asOFFSET(Vec3Wrapper, y));
+    _engine->RegisterObjectProperty("Vec3", "float z", asOFFSET(Vec3Wrapper, z));
+    _engine->RegisterObjectMethod("Vec3", "float length() const", asFUNCTION(vec3Length), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "float length2() const", asFUNCTION(vec3Length2), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "Vec3 normalized() const", asFUNCTION(vec3Normalized), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "float dot(const Vec3& in) const", asFUNCTION(vec3Dot), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "Vec3 cross(const Vec3& in) const", asFUNCTION(vec3Cross), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "float angle(const Vec3& in) const", asFUNCTION(vec3Angle), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "Vec3 lerp(const Vec3& in, float) const", asFUNCTION(vec3Lerp), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "Vec3 rotate(const Vec3& in, float) const", asFUNCTION(vec3Rotate), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "Vec3 opAdd(const Vec3& in) const", asFUNCTIONPR(vec3OpAdd, (const Vec3Wrapper&, const Vec3Wrapper&), Vec3Wrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "Vec3 opSub(const Vec3& in) const", asFUNCTIONPR(vec3OpSub, (const Vec3Wrapper&, const Vec3Wrapper&), Vec3Wrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "Vec3 opMul(const Vec3& in) const", asFUNCTIONPR(vec3OpMul, (const Vec3Wrapper&, const Vec3Wrapper&), Vec3Wrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "Vec3 opMul(float) const", asFUNCTIONPR(vec3OpMul, (const Vec3Wrapper&, float), Vec3Wrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "Quaternion opMul(const Quaternion& in) const", asFUNCTIONPR(vec3OpMul, (const Vec3Wrapper&, const QuatWrapper&), QuatWrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "Vec3 opDiv(const Vec3& in) const", asFUNCTIONPR(vec3OpDiv, (const Vec3Wrapper&, const Vec3Wrapper&), Vec3Wrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "Vec3 opDiv(float) const", asFUNCTIONPR(vec3OpDiv, (const Vec3Wrapper&, float), Vec3Wrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Vec3", "bool opEquals(const Vec3& in) const", asFUNCTION(vec3OpEquals), asCALL_CDECL_OBJFIRST);
 
-    _engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(btQuaternionConstructor, (btQuaternion*), void), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT, "void f(const Quaternion& in)", asFUNCTIONPR(btQuaternionConstructor, (const btQuaternion&, btQuaternion*), void), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT, "void f(float, float, float, float)", asFUNCTIONPR(btQuaternionConstructor, (float, float, float, float, btQuaternion*), void), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT, "void f(const Vector3& in, float)", asFUNCTIONPR(btQuaternionConstructor, (const btVector3&, float, btQuaternion*), void), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT, "void f(float, float, float)", asFUNCTIONPR(btQuaternionConstructor, (float, float, float, btQuaternion*), void), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectMethod("Quaternion", "const float& get_x()", asMETHOD(btQuaternion, getX), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "void set_x(float)", asMETHOD(btQuaternion, setX), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "const float& get_y()", asMETHOD(btQuaternion, getY), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "void set_y(float)", asMETHOD(btQuaternion, setY), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "const float& get_z()", asMETHOD(btQuaternion, getZ), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "void set_z(float)", asMETHOD(btQuaternion, setZ), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "const float& get_w()", asMETHOD(btQuaternion, getW), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "void set_w(float)", asMETHOD(btQuaternion, setW), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "float length()", asMETHOD(btQuaternion, length), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "float length2()", asMETHOD(btQuaternion, length2), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "Quaternion& normalize()", asMETHOD(btQuaternion, normalize), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "Quaternion normalized()", asMETHOD(btQuaternion, normalized), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "float dot(const Quaternion& in)", asMETHOD(btQuaternion, dot), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "float getAngle()", asMETHOD(btQuaternion, getAngle), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "float angle(const Quaternion& in)", asMETHOD(btQuaternion, angle), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "void setEuler(const float& in, const float& in, const float& in)", asMETHOD(btQuaternion, setEuler), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "void setEulerRotation(const Vector3& in, const float& in)", asMETHOD(btQuaternion, setRotation), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "Quaternion opAdd(const Quaternion& in)", asMETHOD(btQuaternion, operator+), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "Quaternion opSub(const Quaternion& in)", asMETHODPR(btQuaternion, operator-, (const btQuaternion&) const, btQuaternion), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "Quaternion opNeg()", asMETHODPR(btQuaternion, operator-, () const, btQuaternion), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "Quaternion opMul(const Quaternion& in)", asFUNCTIONPR(operator*, (const btQuaternion&, const btQuaternion&), btQuaternion), asCALL_CDECL_OBJFIRST);
-    _engine->RegisterObjectMethod("Quaternion", "Quaternion opMul(const Vector3& in)", asFUNCTIONPR(operator*, (const btQuaternion&, const btVector3&), btQuaternion), asCALL_CDECL_OBJFIRST);
-    _engine->RegisterObjectMethod("Quaternion", "Quaternion opMul(const float& in)", asMETHOD(btQuaternion, operator*), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "Quaternion opDiv(const float& in)", asMETHOD(btQuaternion, operator/), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Quaternion", "bool opEquals(const Quaternion& in)", asMETHOD(btQuaternion, operator==), asCALL_THISCALL);
+    _engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(quatConstructor, (QuatWrapper*), void), asCALL_CDECL_OBJLAST);
+    _engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT, "void f(const Quaternion& in)", asFUNCTIONPR(quatConstructor, (const QuatWrapper&, QuatWrapper*), void), asCALL_CDECL_OBJLAST);
+    _engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT, "void f(float, float, float, float)", asFUNCTIONPR(quatConstructor, (float, float, float, float, QuatWrapper*), void), asCALL_CDECL_OBJLAST);
+    _engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT, "void f(const Vec3& in, float)", asFUNCTIONPR(quatConstructor, (const Vec3Wrapper&, float, QuatWrapper*), void), asCALL_CDECL_OBJLAST);
+    _engine->RegisterObjectBehaviour("Quaternion", asBEHAVE_CONSTRUCT, "void f(float, float, float)", asFUNCTIONPR(quatConstructor, (float, float, float, QuatWrapper*), void), asCALL_CDECL_OBJLAST);
+    _engine->RegisterObjectProperty("Quaternion", "float x", asOFFSET(QuatWrapper, x));
+    _engine->RegisterObjectProperty("Quaternion", "float y", asOFFSET(QuatWrapper, y));
+    _engine->RegisterObjectProperty("Quaternion", "float z", asOFFSET(QuatWrapper, z));
+    _engine->RegisterObjectProperty("Quaternion", "float w", asOFFSET(QuatWrapper, x));
+    _engine->RegisterObjectMethod("Quaternion", "float length() const", asFUNCTION(quatLength), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "float length2() const", asFUNCTION(quatLength2), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "Quaternion normalized() const", asFUNCTION(quatNormalized), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "float dot(const Quaternion& in) const", asFUNCTION(quatDot), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "float getAngle() const", asFUNCTION(quatGetAngle), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "float angle(const Quaternion& in) const", asFUNCTION(quatAngle), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "Quaternion opAdd(const Quaternion& in) const", asFUNCTION(quatOpAdd), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "Quaternion opSub(const Quaternion& in) const", asFUNCTION(quatOpSub), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "Quaternion opNeg() const", asFUNCTION(quatOpNeg), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "Quaternion opMul(const Quaternion& in) const", asFUNCTIONPR(quatOpMul, (const QuatWrapper&, const QuatWrapper&), QuatWrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "Quaternion opMul(const Vec3& in) const", asFUNCTIONPR(quatOpMul, (const QuatWrapper&, const Vec3Wrapper&), QuatWrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "Quaternion opMul(float) const", asFUNCTIONPR(quatOpMul, (const QuatWrapper&, float), QuatWrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "Quaternion opDiv(float) const", asFUNCTION(quatOpDiv), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Quaternion", "bool opEquals(const Quaternion& in) const", asFUNCTION(quatOpEquals), asCALL_CDECL_OBJFIRST);
 
-    _engine->RegisterObjectBehaviour("Transform", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(btTransformConstructor, (btTransform*), void), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectBehaviour("Transform", asBEHAVE_CONSTRUCT, "void f(const Transform& in)", asFUNCTIONPR(btTransformConstructor, (const btTransform&, btTransform*), void), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectBehaviour("Transform", asBEHAVE_CONSTRUCT, "void f(Vector3& in, Quaternion& in)", asFUNCTIONPR(btTransformConstructor, (const btVector3&, const btQuaternion&, btTransform*), void), asCALL_CDECL_OBJLAST);
-    _engine->RegisterObjectMethod("Transform", "const Vector3& get_origin() const", asMETHODPR(btTransform, getOrigin, () const, const btVector3&), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Transform", "void set_origin(const Vector3& in)", asMETHOD(btTransform, setOrigin), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Transform", "Quaternion get_rotation()", asMETHOD(btTransform, getRotation), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Transform", "void set_rotation(const Quaternion& in)", asMETHOD(btTransform, setRotation), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Transform", "Vector3 opMul(const Vector3& in)", asMETHODPR(btTransform, operator*, (const btVector3&) const, btVector3), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Transform", "Quaternion opMul(const Quaternion& in)", asMETHODPR(btTransform, operator*, (const btQuaternion&) const, btQuaternion), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Transform", "Transform opMul(const Transform& in)", asMETHODPR(btTransform, operator*, (const btTransform&) const, btTransform), asCALL_THISCALL);
-    _engine->RegisterObjectMethod("Transform", "bool opEquals(const Transform& in)", asFUNCTIONPR(operator==, (const btTransform&, const btTransform&), bool), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectBehaviour("Transform", asBEHAVE_CONSTRUCT, "void f()", asFUNCTIONPR(transConstructor, (TransWrapper*), void), asCALL_CDECL_OBJLAST);
+    _engine->RegisterObjectBehaviour("Transform", asBEHAVE_CONSTRUCT, "void f(const Transform& in)", asFUNCTIONPR(transConstructor, (const TransWrapper&, TransWrapper*), void), asCALL_CDECL_OBJLAST);
+    _engine->RegisterObjectBehaviour("Transform", asBEHAVE_CONSTRUCT, "void f(Vec3& in, Quaternion& in)", asFUNCTIONPR(transConstructor, (const Vec3Wrapper&, const QuatWrapper&, TransWrapper*), void), asCALL_CDECL_OBJLAST);
+    _engine->RegisterObjectProperty("Transform", "Vec3 pos", asOFFSET(TransWrapper, v));
+    _engine->RegisterObjectProperty("Transform", "Quaternion rot", asOFFSET(TransWrapper, q));
+    _engine->RegisterObjectMethod("Transform", "Vec3 opMul(const Vec3& in) const", asFUNCTIONPR(transOpMul, (const TransWrapper&, const Vec3Wrapper&), Vec3Wrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Transform", "Quaternion opMul(const Quaternion& in) const", asFUNCTIONPR(transOpMul, (const TransWrapper&, const QuatWrapper&), QuatWrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Transform", "Transform opMul(const Transform& in) const", asFUNCTIONPR(transOpMul, (const TransWrapper&, const TransWrapper&), TransWrapper), asCALL_CDECL_OBJFIRST);
+    _engine->RegisterObjectMethod("Transform", "bool opEquals(const Transform& in) const", asFUNCTION(transOpEquals), asCALL_CDECL_OBJFIRST);
 
     std::string code =
         "interface Script {\n"
@@ -245,18 +280,34 @@ ScriptEngine::~ScriptEngine() {
 
 
 void ScriptEngine::init() {
+    _engine->RegisterGlobalProperty("PhysicsEngine@ physics", &_physics);
+    _engine->RegisterGlobalProperty("GameEngine@ game", &_game);
 }
 
 void ScriptEngine::frame(double time) {
-    _ctx->Prepare(_frameFunc);
-    _ctx->SetArgDouble(0, time);
-    _ctx->Execute();
+    if(!_pause) {
+        _ctx->Prepare(_frameFunc);
+        _ctx->SetArgDouble(0, time);
+        _ctx->Execute();
+    }
 }
 
 void ScriptEngine::reset() {
 }
 
 void ScriptEngine::changeState(int state) {
+    switch(state) {
+        case Game::GS_MENU:
+            _pause = true;
+            break;
+        case Game::GS_RUNNING:
+            _pause = false;
+            break;
+        case Game::GS_QUIT:
+            break;
+        default:
+            break;
+    }
 }
 
 void ScriptEngine::_messageCallback(const asSMessageInfo* msg) {

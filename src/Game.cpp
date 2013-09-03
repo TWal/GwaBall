@@ -35,6 +35,7 @@ Game::Game() {
     _log->info("Initializing clock");
     _time = std::chrono::high_resolution_clock::now();
 
+    _game->loadLevel("Test.xml");
     _state = -1;
 }
 

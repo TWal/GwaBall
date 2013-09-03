@@ -58,5 +58,6 @@
 
     <Scripts>
         <Script class="FramePrinter" path="FramePrinter.as" />
+        <Script class="PlayerPositionPrinter" path="PlayerPositionPrinter.as" />
     </Scripts>
 </Map>

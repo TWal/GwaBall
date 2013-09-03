@@ -28,7 +28,6 @@ GameEngine::~GameEngine() {
 
 void GameEngine::init() {
     _player->init();
-    _objmgr->load("Test.xml");
 }
 
 void GameEngine::frame(double time) {
@@ -69,6 +68,10 @@ void GameEngine::changeState(int state) {
         default:
             break;
     }
+}
+
+void GameEngine::loadLevel(const std::string& path) {
+    _objmgr->load(path);
 }
 
 Player* GameEngine::getPlayer() {

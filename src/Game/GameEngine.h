@@ -2,6 +2,7 @@
 #define GAME_GAMEENGINE_H
 
 #include "../Engine.h"
+#include <string>
 
 class Game;
 class btRigidBody;
@@ -22,6 +23,7 @@ class GameEngine : public Engine {
         virtual void reset();
         virtual void changeState(int state);
 
+        void loadLevel(const std::string& path);
         Player* getPlayer();
 
     private:

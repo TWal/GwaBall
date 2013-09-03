@@ -4,8 +4,8 @@ class PositionPrinter : Script {
         @_body = @body;
     }
     void frame(double time) {
-        Vector3 origin = _body.transform.origin;
-        print("(" + origin.x + ", " + origin.y + ", " + origin.z + ")\n");
+        Vec3 pos = _body.transform.pos;
+        print("(" + pos.x + ", " + pos.y + ", " + pos.z + ")\n");
     }
 }
 
