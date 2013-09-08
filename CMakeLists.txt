@@ -14,10 +14,6 @@ find_package(Bullet REQUIRED)
 include_directories(${BULLET_INCLUDE_DIRS})
 list(APPEND LIBS ${BULLET_LIBRARIES})
 
-find_package(PugiXML REQUIRED)
-include_directories(${PUGIXML_INCLUDE_DIRS})
-list(APPEND LIBS ${PUGIXML_LIBRARIES})
-
 find_package(AngelScript REQUIRED)
 include_directories(${ANGELSCRIPT_INCLUDE_DIRS})
 list(APPEND LIBS ${ANGELSCRIPT_LIBRARY})

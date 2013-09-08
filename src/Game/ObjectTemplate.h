@@ -3,6 +3,7 @@
 
 #include <pugixml.hpp>
 #include <string>
+#include "thirdparty/rapidjson/document.h"
 
 class ObjectManager;
 class btCollisionShape;
@@ -10,11 +11,10 @@ class Logger;
 
 class ObjectTemplate {
     public:
-        ObjectTemplate(ObjectManager* parent, size_t id);
+        ObjectTemplate(ObjectManager* parent, size_t id, const std::string& name);
         ~ObjectTemplate();
 
-        void load(const std::string& file, Logger* log);
-        void load(pugi::xml_node root, Logger* log);
+        void load(const rapidjson::Value& val, Logger* log);
 
         size_t getId();
         const std::string& getName();
@@ -24,7 +24,7 @@ class ObjectTemplate {
         bool hasScript();
         const std::string& getScriptClass();
     private:
-        btCollisionShape* _getCollisionShapeFromElement(pugi::xml_node element);
+        btCollisionShape* _getCollisionShapeFromValue(const rapidjson::Value& val, Logger* log);
         ObjectManager* _parent;
         size_t _id;
         std::string _name;

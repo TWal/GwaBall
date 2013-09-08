@@ -2,7 +2,7 @@
 #define GAME_OBJECTMANAGER_H
 
 #include <string>
-#include <pugixml.hpp>
+#include "thirdparty/rapidjson/document.h"
 #include <vector>
 
 class GameEngine;
@@ -15,7 +15,7 @@ class ObjectManager {
         ObjectManager(GameEngine* parent);
         ~ObjectManager();
         void load(const std::string& file);
-        void load(pugi::xml_node root);
+        void load(const rapidjson::Document& doc);
 
         void clear();
 

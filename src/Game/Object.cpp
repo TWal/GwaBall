@@ -24,21 +24,36 @@ Object::~Object() {
     _parent->parent()->getPhysicsEngine()->deleteRigidBody(_body);
 }
 
-void Object::load(pugi::xml_node root, Logger* log) {
+void Object::load(const rapidjson::Value& val, Logger* log) {
     _node = _parent->parent()->getGraphicsEngine()->getSceneManager()->getRootSceneNode()->createChildSceneNode();
     _node->attachObject(_parent->parent()->getGraphicsEngine()->getSceneManager()->createEntity(_template->getName() + std::to_string(_id), _template->getEntityPath()));
-    if(pugi::xml_node pos = root.child("Position")) {
-        _node->setPosition(Utils::getOgreVector(pos));
+
+    if(const rapidjson::Value::Member* mpos = val.FindMember("pos")) {
+        Ogre::Vector3 pos = Utils::getOgreVector(mpos->value);
+        if(!isnan(pos.x)) {
+            _node->setPosition(pos);
+        } else {
+            log->error("$.objects.%s[%u].pos is malformed, aborting", _template->getName().c_str(), _id);
+            return;
+        }
     } else {
-        log->error("/Transform/Position does not exists, aborting");
+        log->error("$.objects.%s[%u].pos does not exists, aborting", _template->getName().c_str(), _id);
         return;
     }
 
-    if(pugi::xml_node rotNode = root.child("Rotation")) {
-        Ogre::Vector3 rot = Utils::getOgreVector(rotNode);
-        btQuaternion rotation = btQuaternion::getIdentity();
-        rotation.setEuler(Ogre::Math::DegreesToRadians(rot.y), Ogre::Math::DegreesToRadians(rot.x), Ogre::Math::DegreesToRadians(rot.z));
-        _node->setOrientation(Utils::convert(rotation));
+    if(const rapidjson::Value::Member* mrot = val.FindMember("rot")) {
+        Ogre::Vector3 rot = Utils::getOgreVector(mrot->value);
+        if(!isnan(rot.x)) {
+            btQuaternion rotation = btQuaternion::getIdentity();
+            rotation.setEuler(Ogre::Math::DegreesToRadians(rot.y), Ogre::Math::DegreesToRadians(rot.x), Ogre::Math::DegreesToRadians(rot.z));
+            _node->setOrientation(Utils::convert(rotation));
+        } else {
+            log->error("$.objects.%s[%u].rot is malformed, aborting", _template->getName().c_str(), _id);
+            return;
+        }
+    } else {
+        log->error("$.objects.%s[%u].rot does not exists, aborting", _template->getName().c_str(), _id);
+        return;
     }
 
     _group = _template->getMass() <= FLT_EPSILON ? PhysicsEngine::COL_STATIC : PhysicsEngine::COL_DYNAMIC;

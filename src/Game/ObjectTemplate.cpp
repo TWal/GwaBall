@@ -12,10 +12,10 @@
 #include "../Script/ScriptEngine.h"
 #include "../Utils.h"
 
-ObjectTemplate::ObjectTemplate(ObjectManager* parent, size_t id) :
+ObjectTemplate::ObjectTemplate(ObjectManager* parent, size_t id, const std::string& name) :
     _parent(parent),
     _id(id),
-    _name(""),
+    _name(name),
     _entityPath(""),
     _mass(0.f),
     _shape(nullptr) {
@@ -25,87 +25,74 @@ ObjectTemplate::~ObjectTemplate() {
     _parent->parent()->getPhysicsEngine()->deleteCollisionShape(_shape);
 }
 
-void ObjectTemplate::load(const std::string& file, Logger* log) {
-    pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_file(std::string(file).c_str());
-    if(result) {
-        log->info("Loading %s", file.c_str());
-    } else {
-        log->error("Error when loading %s: %s", file.c_str(), result.description());
-        return;
-    }
-
-    if(pugi::xml_node root = doc.child("Template")) {
-        load(root, log);
-    } else {
-        log->error("/Template does not exists, aborting");
-    }
-}
-
-void ObjectTemplate::load(pugi::xml_node root, Logger* log) {
-    if(pugi::xml_attribute name = root.attribute("name")) {
-        _name = name.value();
-    } else {
-        log->error("/Template/@name does not exists, aborting");
-    }
-
-    if(pugi::xml_node graphicsNode = root.child("Graphics")) {
-        if(pugi::xml_node prop = graphicsNode.child("Properties")) {
-            if(pugi::xml_attribute attr = prop.attribute("mesh")) {
-                _entityPath = attr.value();
-            } else {
-                log->error("/Template/Graphics/Properties/@mesh does not exists, aborting");
-                return;
-            }
+void ObjectTemplate::load(const rapidjson::Value& val, Logger* log) {
+    if(const rapidjson::Value::Member* mmesh = val.FindMember("mesh")) {
+        if(mmesh->value.IsString()) {
+            _entityPath = mmesh->value.GetString();
         } else {
-            log->error("/Template/Graphics/Properties does not exists, aborting");
+            log->error("$.templates.%s.mesh must be a string, aborting", _name.c_str());
             return;
         }
     } else {
-        log->error("/Template/Graphics does not exists, aborting");
+        log->error("$.templates.%s.mesh does not exists, aborting", _name.c_str());
         return;
     }
 
-    if(pugi::xml_node physicsNode = root.child("Physics")) {
-        if(pugi::xml_node shape = physicsNode.child("Shape")) {
-            if(!(_shape = _getCollisionShapeFromElement(shape))) {
-                log->error("/Template/Physics/Shape is malformed, aborting");
+    if(const rapidjson::Value::Member* mmass = val.FindMember("mass")) {
+        if(mmass->value.IsNumber()) {
+            _mass = mmass->value.GetDouble();
+        } else {
+            log->error("$.templates.%s.mass must be a number, aborting", _name.c_str());
+            return;
+        }
+    } else {
+        log->error("$.templates.%s.mass does not exists, aborting", _name.c_str());
+        return;
+    }
+
+    if(const rapidjson::Value::Member* mshape = val.FindMember("shape")) {
+        if(mshape->value.IsObject()) {
+            if(!(_shape = _getCollisionShapeFromValue(mshape->value, log))) {
+                log->error("$.templates.%s.shape is malformed, aborting", _name.c_str());
                 return;
             }
         } else {
-            log->error("/Template/Physics/Shape does not exists, aborting");
+            log->error("$.templates.%s.shape must be an object, aborting", _name.c_str());
+            return;
         }
-        if(pugi::xml_node prop = physicsNode.child("Properties")) {
-            if(pugi::xml_attribute attr = prop.attribute("mass")) {
-                if(isnan(_mass = attr.as_float(NAN))) {
-                    log->error("/Template/Physics/Properties/@mass is malformed, aborting");
+    } else {
+        log->error("$.templates.%s.shape does not exists, aborting", _name.c_str());
+        return;
+    }
+
+    if(const rapidjson::Value::Member* mscript = val.FindMember("script")) {
+        const rapidjson::Value& script = mscript->value;
+        if(script.IsObject()) {
+            if(const rapidjson::Value::Member* mclassName = script.FindMember("class")) {
+                if(mclassName->value.IsString()) {
+                    if(const rapidjson::Value::Member* mpath = script.FindMember("path")) {
+                        if(mpath->value.IsString()) {
+                            _scriptClass = mclassName->value.GetString();
+                            _scriptPath = mpath->value.GetString();
+                            _parent->parent()->getScriptEngine()->loadFile("data/Scripts/" + _scriptPath, _scriptClass);
+                        } else {
+                            log->error("$.templates.%s.script.path must be a string, aborting", _name.c_str());
+                            return;
+                        }
+                    } else {
+                        log->error("$.templates.%s.script.path does not exists, aborting", _name.c_str());
+                        return;
+                    }
+                } else {
+                    log->error("$.templates.%s.script.class must be a string, aborting", _name.c_str());
                     return;
                 }
             } else {
-                log->error("/Template/Physics/Properties/@mass does not exists, aborting");
+                log->error("$.templates.%s.script.class does not exists, aborting", _name.c_str());
                 return;
             }
         } else {
-            log->error("/Template/Physics/Properties does not exists, aborting");
-            return;
-        }
-    } else {
-        log->error("/Template/Physics does not exists, aborting");
-        return;
-    }
-
-    if(pugi::xml_node scriptNode = root.child("Script")) {
-        if(pugi::xml_attribute classAttr = scriptNode.attribute("class")) {
-            if(pugi::xml_attribute pathAttr = scriptNode.attribute("path")) {
-                _scriptClass = classAttr.value();
-                _scriptPath = pathAttr.value();
-                _parent->parent()->getScriptEngine()->loadFile("data/Scripts/" + _scriptPath, _scriptClass);
-            } else {
-                log->error("/Template/Script/@path does not exists, aborting");
-                return;
-            }
-        } else {
-            log->error("/Template/Script/@class does not exists, aborting");
+            log->error("$.templates.%s.script must be an object, aborting", _name.c_str());
             return;
         }
     }
@@ -139,37 +126,57 @@ const std::string& ObjectTemplate::getScriptClass() {
     return _scriptClass;
 }
 
-btCollisionShape* ObjectTemplate::_getCollisionShapeFromElement(pugi::xml_node element) {
-    std::string type = element.attribute("type").value();
-    if(type == "box") {
-        return new btBoxShape(Utils::getBtVector(element.child("HalfExtends")));
-    } else if(type == "convex") {
-        std::string path;
-        if(element.child("Mesh") && element.child("Mesh").attribute("path")) {
-            path = _entityPath;
+btCollisionShape* ObjectTemplate::_getCollisionShapeFromValue(const rapidjson::Value& val, Logger* log) {
+    if(const rapidjson::Value::Member* mtype = val.FindMember("type")) {
+        if(mtype->value.IsString()) {
+            std::string type = mtype->value.GetString();
+            if(type == "box") {
+                if(const rapidjson::Value::Member* mhalfExtends = val.FindMember("size")) {
+                    btVector3 extends = Utils::getBtVector(mhalfExtends->value);
+                    if(!isnan(extends.x())) {
+                        return new btBoxShape(extends/2);
+                    } else {
+                        log->error("$.templates.%s.shape.size is malformed, aborting", _name.c_str());
+                        return nullptr;
+                    }
+                } else {
+                    log->error("$.templates.%s.shape.size does not exists, aborting", _name.c_str());
+                    return nullptr;
+                }
+            } else if(type == "convex" || type == "mesh") {
+                std::string path;
+                if(const rapidjson::Value::Member* mpath = val.FindMember("path")) {
+                    if(mpath->value.IsString()) {
+                        path = mpath->value.GetString();
+                    } else {
+                        path = _entityPath;
+                    }
+                } else {
+                    path = _entityPath;
+                }
+                Ogre::Entity* entity = _parent->parent()->getGraphicsEngine()->getSceneManager()->createEntity("__shape__", path);
+                btCollisionShape* shape;
+                if(type[0] == 'c') {
+                    shape = PhysicsHelper::createConvexHullShape(entity);
+                } else {
+                    if(_mass <= FLT_EPSILON) {
+                        shape = PhysicsHelper::createBvhTriangleMeshShape(entity);
+                    } else {
+                        shape = PhysicsHelper::createGImpactMeshShape(entity);
+                    }
+                }
+                _parent->parent()->getGraphicsEngine()->getSceneManager()->destroyEntity(entity);
+                return shape;
+            } else {
+                log->error("$.templates.%s.shape.type (\"%s\") is not recognised, aborting", _name.c_str(), type.c_str());
+                return nullptr;
+            }
         } else {
-            path = _entityPath;
+            log->error("$.templates.%s.shape.type must be a string, aborting", _name.c_str());
+            return nullptr;
         }
-        Ogre::Entity* entity = _parent->parent()->getGraphicsEngine()->getSceneManager()->createEntity("__shape__", path);
-        btCollisionShape* shape = PhysicsHelper::createConvexHullShape(entity);
-        _parent->parent()->getGraphicsEngine()->getSceneManager()->destroyEntity(entity);
-        return shape;
-    } else if(type == "mesh") {
-        std::string path;
-        if(element.child("Mesh") && element.child("Mesh").attribute("path")) {
-            path = element.child("Mesh").attribute("path").value();
-        } else {
-            path = _entityPath;
-        }
-        Ogre::Entity* entity = _parent->parent()->getGraphicsEngine()->getSceneManager()->createEntity("__shape__", path);
-        btCollisionShape* shape;
-        if(_mass <= FLT_EPSILON) {
-            shape = PhysicsHelper::createBvhTriangleMeshShape(entity);
-        } else {
-            shape = PhysicsHelper::createGImpactMeshShape(entity);
-        }
-        _parent->parent()->getGraphicsEngine()->getSceneManager()->destroyEntity(entity);
-        return shape;
+    } else {
+        log->error("$.templates.%s.shape.type does not exists, aborting", _name.c_str());
+        return nullptr;
     }
-    return nullptr;
 }

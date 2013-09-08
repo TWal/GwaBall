@@ -1,7 +1,7 @@
 #ifndef GAME_OBJECT_H
 #define GAME_OBJECT_H
 
-#include <pugixml.hpp>
+#include "thirdparty/rapidjson/document.h"
 class ObjectManager;
 class ObjectTemplate;
 class btRigidBody;
@@ -14,7 +14,7 @@ class Object {
     public:
         Object(ObjectManager* parent, size_t id, ObjectTemplate* objTemplate);
         ~Object();
-        void load(pugi::xml_node root, Logger* log);
+        void load(const rapidjson::Value& val, Logger* log);
 
     private:
         ObjectManager* _parent;

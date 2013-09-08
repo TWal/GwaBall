@@ -5,7 +5,7 @@
 #include <OgreVector3.h>
 #include <LinearMath/btVector3.h>
 #include <LinearMath/btQuaternion.h>
-#include <pugixml.hpp>
+#include "thirdparty/rapidjson/document.h"
 
 namespace Ogre {
     class SceneNode;
@@ -33,8 +33,8 @@ class Utils {
             return Ogre::Quaternion(quaternion.w(), quaternion.x(), quaternion.y(), quaternion.z());
         }
 
-        static btVector3 getBtVector(pugi::xml_node element);
-        static Ogre::Vector3 getOgreVector(pugi::xml_node element);
+        static btVector3 getBtVector(const rapidjson::Value& val);
+        static Ogre::Vector3 getOgreVector(const rapidjson::Value& val);
 
         static void deleteOgreNode(Ogre::SceneNode* node);
 };

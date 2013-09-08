@@ -18,80 +18,104 @@ ObjectManager::~ObjectManager() {
 }
 
 void ObjectManager::load(const std::string& file) {
-    pugi::xml_document doc;
-    pugi::xml_parse_result result = doc.load_file(std::string("data/Maps/" + file).c_str());
-	if(result) {
-        _log->info("Loading data/Maps/%s", file.c_str());
-    } else {
-        _log->error("Error when loading data/Maps/%s: %s", file.c_str(), result.description());
-        return;
-	}
+    if(FILE* f = fopen(("data/Maps/" + file).c_str(), "rb")) {
+        char* str = nullptr;
+        fseek(f, 0, SEEK_END);
+        long size = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        str = new char[size];
+        fread(str, size, 1, f);
+        fclose(f);
 
-	pugi::xml_node root = doc.child("Map");
-	if(root) {
-        load(root);
-	} else {
-        _log->error("/Map does not exists, aborting");
-	}
+        rapidjson::Document doc;
+        doc.ParseInsitu<0>(str);
+        if(!doc.HasParseError()) {
+            load(doc);
+        } else {
+            _log->error("Parsing error in file data/Maps/%s:%u: %s", file.c_str(), doc.GetErrorOffset(), doc.GetParseError());
+        }
+        delete[] str;
+    } else {
+        _log->error("Could not read file data/Maps/%s", file.c_str());
+    }
 }
 
-void ObjectManager::load(pugi::xml_node root) {
-    if(pugi::xml_node templatesNode = root.child("Templates")) {
-        for(pugi::xml_node node : templatesNode.children("Template")) {
-            _templates.push_back(new ObjectTemplate(this, _getNextTemplateId()));
-            _templates.back()->load(node, _log);
-        }
-    } else {
-        _log->error("/Map/Templates does not exists, aborting");
-        return;
-    }
-
-    if(pugi::xml_node objectsNode = root.child("Objects")) {
-        for(pugi::xml_node node : objectsNode.children("Template")) {
-            if(pugi::xml_attribute attr = node.attribute("name")) {
-                ObjectTemplate* tmpl = _templates[_getIdFromTemplateName(attr.value())];
-                for(pugi::xml_node node2 : node.children("Transform")) {
-                    _objects.push_back(new Object(this, _getNextObjectId(), tmpl));
-                    _objects.back()->load(node2, _log);
+void ObjectManager::load(const rapidjson::Document& doc) {
+    if(doc.IsObject()) {
+        if(const rapidjson::Value::Member* mtemplates = doc.FindMember("templates")) {
+            const rapidjson::Value& templates = mtemplates->value;
+            if(templates.IsObject()) {
+                for(rapidjson::Value::ConstMemberIterator it = templates.MemberBegin(); it != templates.MemberEnd(); ++it) {
+                    _templates.push_back(new ObjectTemplate(this, _getNextTemplateId(), it->name.GetString()));
+                    _templates.back()->load(it->value, _log);
                 }
             } else {
-                _log->error("/Map/Objects/Template/@name does not exists, aborting");
+                _log->error("$.templates must be an object, aborting");
                 return;
             }
         }
 
-        if(pugi::xml_node playerNode = objectsNode.child("Player")) {
-            if(pugi::xml_node position = playerNode.child("Position")) {
-                _parent->getPlayer()->getBody()->getWorldTransform().setOrigin(Utils::getBtVector(position));
+        if(const rapidjson::Value::Member* mobjects = doc.FindMember("objects")) {
+            const rapidjson::Value& objects = mobjects->value;
+            if(objects.IsObject()) {
+                for(rapidjson::Value::ConstMemberIterator it = objects.MemberBegin(); it != objects.MemberEnd(); ++it) {
+                    ObjectTemplate* tmpl = _templates[_getIdFromTemplateName(it->name.GetString())];
+                    const rapidjson::Value& instances = it->value;
+                    if(instances.IsArray()) {
+                        for(rapidjson::Value::ConstValueIterator it2 = instances.Begin(); it2 != instances.End(); ++it2) {
+                            _objects.push_back(new Object(this, _getNextObjectId(), tmpl));
+                            _objects.back()->load(*it2, _log);
+                        }
+                    } else {
+                        _log->error("$.objects.%s must be an array, aborting", it->name.GetString());
+                        return;
+                    }
+                }
             } else {
-                _log->error("/Map/Objects/Player/Position does not exists, aborting");
+                _log->error("$.objects must be an object, aborting");
                 return;
             }
-        } else {
-            _log->error("/Map/Objects/Player does not exists, aborting");
-            return;
         }
-    } else {
-        _log->error("/Map/Objects does not exists, aborting");
-        return;
-    }
 
-    if(pugi::xml_node scriptsNode = root.child("Scripts")) {
-        for(pugi::xml_node node : scriptsNode.children("Script")) {
-            if(pugi::xml_attribute classAttr = node.attribute("class")) {
-                if(pugi::xml_attribute pathAttr = node.attribute("path")) {
-                    _parent->getScriptEngine()->loadFile(std::string("data/Scripts/") + pathAttr.value(), classAttr.value());
-                    _parent->getScriptEngine()->instanciateScript(classAttr.value());
+        if(const rapidjson::Value::Member* mscripts = doc.FindMember("scripts")) {
+            const rapidjson::Value& scripts = mscripts->value;
+            if(scripts.IsObject()) {
+                for(rapidjson::Value::ConstMemberIterator it = scripts.MemberBegin(); it != scripts.MemberEnd(); ++it) {
+                    if(it->value.IsString()) {
+                        _parent->getScriptEngine()->loadFile(std::string("data/Scripts/") + it->value.GetString(), it->name.GetString());
+                        _parent->getScriptEngine()->instanciateScript(it->name.GetString());
+                    } else {
+                        _log->error("$.scripts.%s must be a string, aborting", it->name.GetString());
+                    }
+                }
+            } else {
+                _log->error("$.scripts must be an object, aborting");
+                return;
+            }
+        }
+
+        if(const rapidjson::Value::Member* mplayer = doc.FindMember("player")) {
+            if(mplayer->value.IsObject()) {
+                if(const rapidjson::Value::Member* mpos = mplayer->value.FindMember("pos")) {
+                    btVector3 pos = Utils::getBtVector(mpos->value);
+                    if(!isnan(pos.x())) {
+                        _parent->getPlayer()->getBody()->getWorldTransform().setOrigin(pos);
+                    } else {
+                        _log->error("$.player.pos is malformed, aborting");
+                        return;
+                    }
                 } else {
-                    _log->error("/Map/Scripts/Script/@path does not exists, aborting");
+                    _log->error("$.player.pos does not exists, aborting");
                     return;
                 }
             } else {
-                _log->error("/Map/Scripts/Script/@class does not exists, aborting");
+                _log->error("$.player must be an object, aborting");
                 return;
             }
         }
-    } //No else: it is not required
+    } else {
+        _log->error("$ must be an object");
+    }
 }
 
 void ObjectManager::clear() {

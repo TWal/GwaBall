@@ -2,11 +2,11 @@
 
 #include <angelscript.h>
 #include "../Game.h"
-#include "thirdparty/scriptstdstring/scriptstdstring.h"
-#include "thirdparty/scriptarray/scriptarray.h"
-#include "thirdparty/serializer/serializer.h"
-#include "thirdparty/scriptmath/scriptmath.h"
-#include "thirdparty/scriptmath/scriptmathcomplex.h"
+#include "thirdparty/angelscript/scriptstdstring/scriptstdstring.h"
+#include "thirdparty/angelscript/scriptarray/scriptarray.h"
+#include "thirdparty/angelscript/serializer/serializer.h"
+#include "thirdparty/angelscript/scriptmath/scriptmath.h"
+#include "thirdparty/angelscript/scriptmath/scriptmathcomplex.h"
 #include "../Logger.h"
 #include "../Physics/PhysicsEngine.h"
 #include <btBulletDynamicsCommon.h>
