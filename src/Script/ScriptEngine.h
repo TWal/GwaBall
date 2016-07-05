@@ -6,12 +6,14 @@
 #include <unordered_map>
 
 class Game;
+/*
 class asSMessageInfo;
 class asIScriptEngine;
 class asIScriptModule;
 class asIScriptContext;
 class asIScriptFunction;
 class asIObjectType;
+*/
 class btRigidBody;
 
 class ScriptEngine : public Engine {
@@ -30,12 +32,14 @@ class ScriptEngine : public Engine {
 
     private:
         int _compile();
-        void _messageCallback(const asSMessageInfo* msg);
+        //void _messageCallback(const asSMessageInfo* msg);
+        /*
         asIScriptEngine* _engine;
         asIScriptModule* _module;
         asIScriptContext* _ctx;
         asIScriptFunction* _addFunc;
         asIScriptFunction* _frameFunc;
+        */
         std::unordered_map<std::string, std::string> _classesCode;
 };
 

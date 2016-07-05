@@ -1,7 +1,6 @@
 #ifndef GAME_OBJECTTEMPLATE_H
 #define GAME_OBJECTTEMPLATE_H
 
-#include <pugixml.hpp>
 #include <string>
 #include "thirdparty/rapidjson/document.h"
 

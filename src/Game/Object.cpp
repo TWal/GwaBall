@@ -2,7 +2,7 @@
 #include <OgreEntity.h>
 #include <OgreSceneNode.h>
 #include <OgreSceneManager.h>
-#include "../Utils.h"
+#include "JsonUtils.h"
 #include "../Graphics/GraphicsEngine.h"
 #include "../Physics/PhysicsEngine.h"
 #include "../Script/ScriptEngine.h"
@@ -29,7 +29,7 @@ void Object::load(const rapidjson::Value& val, Logger* log) {
     _node->attachObject(_parent->parent()->getGraphicsEngine()->getSceneManager()->createEntity(_template->getName() + std::to_string(_id), _template->getEntityPath()));
 
     if(const rapidjson::Value::Member* mpos = val.FindMember("pos")) {
-        Ogre::Vector3 pos = Utils::getOgreVector(mpos->value);
+        Ogre::Vector3 pos = JsonUtils::getOgreVector(mpos->value);
         if(!isnan(pos.x)) {
             _node->setPosition(pos);
         } else {
@@ -42,7 +42,7 @@ void Object::load(const rapidjson::Value& val, Logger* log) {
     }
 
     if(const rapidjson::Value::Member* mrot = val.FindMember("rot")) {
-        Ogre::Vector3 rot = Utils::getOgreVector(mrot->value);
+        Ogre::Vector3 rot = JsonUtils::getOgreVector(mrot->value);
         if(!isnan(rot.x)) {
             btQuaternion rotation = btQuaternion::getIdentity();
             rotation.setEuler(Ogre::Math::DegreesToRadians(rot.y), Ogre::Math::DegreesToRadians(rot.x), Ogre::Math::DegreesToRadians(rot.z));

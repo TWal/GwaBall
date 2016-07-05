@@ -1,5 +1,6 @@
 #include "ScriptEngine.h"
 
+/*
 #include <angelscript.h>
 #include "../Game.h"
 #include "thirdparty/angelscript/scriptstdstring/scriptstdstring.h"
@@ -7,11 +8,13 @@
 #include "thirdparty/angelscript/serializer/serializer.h"
 #include "thirdparty/angelscript/scriptmath/scriptmath.h"
 #include "thirdparty/angelscript/scriptmath/scriptmathcomplex.h"
+*/
 #include "../Logger.h"
 #include "../Physics/PhysicsEngine.h"
 #include <btBulletDynamicsCommon.h>
 #include "../Game/Player.h"
 #include "../Game/GameEngine.h"
+/*
 
 struct Vec3Wrapper {
     float x, y, z;
@@ -147,9 +150,11 @@ struct ArrayTypeSerializer : public CUserType {
         }
     }
 };
+*/
 
 ScriptEngine::ScriptEngine(Game* parent) : Engine(parent) {
-    _log = new Logger(Logger::INFO, Logger::STDERR | Logger::LOGFILE, "Logs/ScriptEngine.log");
+    //_log = new Logger(Logger::INFO, Logger::STDERR | Logger::LOGFILE, "Logs/ScriptEngine.log");
+    /*
     _engine = asCreateScriptEngine(ANGELSCRIPT_VERSION);
     _engine->SetMessageCallback(asMETHOD(ScriptEngine, _messageCallback), this, asCALL_THISCALL);
     RegisterStdString(_engine);
@@ -270,25 +275,26 @@ ScriptEngine::ScriptEngine(Game* parent) : Engine(parent) {
     loadString(code, "__base__");
 
     _ctx = _engine->CreateContext();
+    */
 }
 
 ScriptEngine::~ScriptEngine() {
     delete _log;
-    _ctx->Release();
-    _engine->Release();
+    //_ctx->Release();
+    //_engine->Release();
 }
 
 
 void ScriptEngine::init() {
-    _engine->RegisterGlobalProperty("PhysicsEngine@ physics", &_physics);
-    _engine->RegisterGlobalProperty("GameEngine@ game", &_game);
+    //_engine->RegisterGlobalProperty("PhysicsEngine@ physics", &_physics);
+    //_engine->RegisterGlobalProperty("GameEngine@ game", &_game);
 }
 
 void ScriptEngine::frame(double time) {
     if(!_pause) {
-        _ctx->Prepare(_frameFunc);
-        _ctx->SetArgDouble(0, time);
-        _ctx->Execute();
+        //_ctx->Prepare(_frameFunc);
+        //_ctx->SetArgDouble(0, time);
+        //_ctx->Execute();
     }
 }
 
@@ -296,6 +302,7 @@ void ScriptEngine::reset() {
 }
 
 void ScriptEngine::changeState(int state) {
+    /*
     switch(state) {
         case Game::GS_MENU:
             _pause = true;
@@ -308,8 +315,10 @@ void ScriptEngine::changeState(int state) {
         default:
             break;
     }
+    */
 }
 
+/*
 void ScriptEngine::_messageCallback(const asSMessageInfo* msg) {
     if(msg->type == asMSGTYPE_ERROR) {
         _log->error("%s (%d, %d) : %s", msg->section, msg->row, msg->col, msg->message);
@@ -319,8 +328,10 @@ void ScriptEngine::_messageCallback(const asSMessageInfo* msg) {
         _log->info("%s (%d, %d) : %s", msg->section, msg->row, msg->col, msg->message);
     }
 }
+*/
 
 void ScriptEngine::loadFile(const std::string& file, const std::string& className) {
+    /*
     std::string s;
     if(FILE* f = fopen(file.c_str(), "r")) {
         char buf[1024];
@@ -340,14 +351,18 @@ void ScriptEngine::loadFile(const std::string& file, const std::string& classNam
         _log->error("Class \"%s\" is not defined");
         return;
     }
+    */
 }
 
 void ScriptEngine::loadString(const std::string& str, const std::string& section) {
+    /*
     _classesCode[section] = str;
     _compile();
+    */
 }
 
 void ScriptEngine::instanciateScript(const std::string& className, btRigidBody* body) {
+    /*
     asIObjectType* objType = _engine->GetObjectTypeById(_module->GetTypeIdByDecl(className.c_str()));
     if(!objType) {
         _log->error("Class \"%s\" is not defined");
@@ -365,9 +380,11 @@ void ScriptEngine::instanciateScript(const std::string& className, btRigidBody* 
     _ctx->SetArgObject(0, obj);
     _ctx->Execute();
     obj->Release();
+    */
 }
 
 int ScriptEngine::_compile() {
+    /*
     CSerializer backup;
     backup.AddUserType(new StringTypeSerializer(), "string");
     backup.AddUserType(new ArrayTypeSerializer(), "array");
@@ -383,4 +400,5 @@ int ScriptEngine::_compile() {
     _frameFunc = _module->GetFunctionByDecl("void __frame__(double)");
 
     return result;
+    */
 }

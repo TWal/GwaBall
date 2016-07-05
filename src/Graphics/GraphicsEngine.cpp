@@ -44,6 +44,7 @@ GraphicsEngine::GraphicsEngine(Game* parent) : Engine(parent) {
         _viewport = _renderWindow->addViewport(_cameraMgr->getCamera());
         _viewport->setBackgroundColour(Ogre::ColourValue(1.f, 1.f, 1.f, 1.f));
         Ogre::WindowEventUtilities::addWindowEventListener(_renderWindow, this);
+        _smgr->setAmbientLight(Ogre::ColourValue(1.f, 1.f, 1.f, 1.f));
     } catch(Ogre::Exception& e) {
         _log->error("An Ogre exception occured: %s.", e.getFullDescription().c_str());
     } catch(std::exception& e) {

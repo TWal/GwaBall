@@ -5,6 +5,7 @@
 #include "GameEngine.h"
 #include "Player.h"
 #include "../Script/ScriptEngine.h"
+#include "JsonUtils.h"
 #include <BulletDynamics/Dynamics/btRigidBody.h>
 
 ObjectManager::ObjectManager(GameEngine* parent) {
@@ -97,7 +98,7 @@ void ObjectManager::load(const rapidjson::Document& doc) {
         if(const rapidjson::Value::Member* mplayer = doc.FindMember("player")) {
             if(mplayer->value.IsObject()) {
                 if(const rapidjson::Value::Member* mpos = mplayer->value.FindMember("pos")) {
-                    btVector3 pos = Utils::getBtVector(mpos->value);
+                    btVector3 pos = JsonUtils::getBtVector(mpos->value);
                     if(!isnan(pos.x())) {
                         _parent->getPlayer()->getBody()->getWorldTransform().setOrigin(pos);
                     } else {

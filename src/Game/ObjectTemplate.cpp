@@ -10,7 +10,7 @@
 #include "../Physics/PhysicsEngine.h"
 #include "../Graphics/GraphicsEngine.h"
 #include "../Script/ScriptEngine.h"
-#include "../Utils.h"
+#include "JsonUtils.h"
 
 ObjectTemplate::ObjectTemplate(ObjectManager* parent, size_t id, const std::string& name) :
     _parent(parent),
@@ -132,7 +132,7 @@ btCollisionShape* ObjectTemplate::_getCollisionShapeFromValue(const rapidjson::V
             std::string type = mtype->value.GetString();
             if(type == "box") {
                 if(const rapidjson::Value::Member* mhalfExtends = val.FindMember("size")) {
-                    btVector3 extends = Utils::getBtVector(mhalfExtends->value);
+                    btVector3 extends = JsonUtils::getBtVector(mhalfExtends->value);
                     if(!isnan(extends.x())) {
                         return new btBoxShape(extends/2);
                     } else {

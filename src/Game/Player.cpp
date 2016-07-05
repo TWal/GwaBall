@@ -10,8 +10,7 @@ static const float BALL_RADIUS = 0.5;
 static const float DAMPING_PER_SEC_XZ = 0.05;
 static const float DAMPING_PER_SEC_Y = 0.75;
 static const float SPEED = 10;
-static const float CONST_DIV = 4;
-static const float CONST_ADD = SPEED - (SPEED / CONST_DIV);
+
 
 Player::Player(GameEngine* parent) :
     _parent(parent),
@@ -35,10 +34,12 @@ void Player::init() {
     _body = _parent->getPhysicsEngine()->addRigidBody(0.5, _shape, _node, PhysicsEngine::COL_PLAYER, PhysicsEngine::COL_ALL);
 }
 
+//vel(t) = speed*ln(1+x)
+//=> vel'(t) = speed*exp(-vel(t)/speed)
 void Player::move(const btVector3& direction, double time) {
     btVector3 dir = btEqual(direction.length2()-1, SIMD_EPSILON) ? direction : direction.normalized();
     float velocity = (_body->getLinearVelocity() * dir).length();
-    float acc = _getAccFromN(_getNFromVel(velocity) + time);
+    float acc = SPEED * exp(-velocity/SPEED);
     _body->applyCentralForce(dir * acc);
     _body->applyTorque(btVector3(dir.z(), dir.y(), -dir.x()) * acc / M_PI);
 
@@ -72,21 +73,6 @@ void Player::frame(double time) {
 }
 
 void Player::reset() {
-}
-
-//f(n) = (f(n-1)/x)+y
-//f(n) = (x*y*(1-(1/(x^n))))/(x-1)
-//With x = CONST_DIV and y = CONST_ADD
-
-float Player::_getNFromVel(float vel) {
-    //f^(-1) (n) = (log(x)-log(((1-x)*(n+(x*y)/(1-x)))/y))/(log(x))
-    float logCONST_DIV = log(CONST_DIV);
-    return (logCONST_DIV - log(((1-CONST_DIV) * (vel + (CONST_DIV * CONST_ADD) / (1 - CONST_DIV))) / CONST_ADD)) / logCONST_DIV;
-}
-
-float Player::_getAccFromN(float N) {
-    //f'(n) = (y*x^(1-n)*log(x))/(x-1)
-    return (CONST_ADD * pow(CONST_DIV, 1-N) * log(CONST_DIV)) / (CONST_DIV - 1);
 }
 
 Ogre::SceneNode* Player::getSceneNode() {
