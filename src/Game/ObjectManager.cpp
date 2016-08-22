@@ -80,17 +80,20 @@ void ObjectManager::load(const rapidjson::Document& doc) {
 
         if(const rapidjson::Value::Member* mscripts = doc.FindMember("scripts")) {
             const rapidjson::Value& scripts = mscripts->value;
-            if(scripts.IsObject()) {
-                for(rapidjson::Value::ConstMemberIterator it = scripts.MemberBegin(); it != scripts.MemberEnd(); ++it) {
-                    if(it->value.IsString()) {
-                        _parent->getScriptEngine()->loadFile(std::string("data/Scripts/") + it->value.GetString(), it->name.GetString());
-                        _parent->getScriptEngine()->instanciateScript(it->name.GetString());
-                    } else {
-                        _log->error("$.scripts.%s must be a string, aborting", it->name.GetString());
+            if(scripts.IsArray()) {
+                for(rapidjson::Value::ConstValueIterator it = scripts.Begin(); it != scripts.End(); ++it) {
+                    //TODO: error handling...
+                    std::string file = it->FindMember("file")->value.GetString();
+                    std::string className = it->FindMember("class")->value.GetString();
+                    std::string args = "";
+                    if(const rapidjson::Value::Member* margs = it->FindMember("args")) {
+                        args = margs->value.GetString();
                     }
+                    _parent->getScriptEngine()->loadFile(std::string("data/Scripts/") + file, className);
+                    _parent->getScriptEngine()->instanciateScript(className, args);
                 }
             } else {
-                _log->error("$.scripts must be an object, aborting");
+                _log->error("$.scripts must be an array, aborting");
                 return;
             }
         }

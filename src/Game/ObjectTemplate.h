@@ -34,7 +34,7 @@ class ObjectTemplate {
         btCollisionShape* _shape;
 
         std::string _scriptClass;
-        std::string _scriptPath;
+        std::string _scriptFile;
 };
 
 #endif

@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 
 project (GwaBall)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMakeModules/")
-SET(CMAKE_CXX_FLAGS "-g -Wall -pedantic -std=c++0x")
+SET(CMAKE_CXX_FLAGS "-g -Wall -pedantic -std=c++14")
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
 SET(CMAKE_EXPORT_COMPILE_COMMANDS "ON")
 
@@ -21,9 +21,10 @@ find_package(Bullet REQUIRED)
 include_directories(${BULLET_INCLUDE_DIRS})
 list(APPEND LIBS ${BULLET_LIBRARIES})
 
-find_package(AngelScript REQUIRED)
-include_directories(${ANGELSCRIPT_INCLUDE_DIRS})
-list(APPEND LIBS ${ANGELSCRIPT_LIBRARY})
+find_package(Lua 5.3 REQUIRED)
+include_directories(${LUA_INCLUDE_DIR})
+#list(APPEND LIBS ${LUA_LIBRARIES})
+list(APPEND LIBS "/usr/lib/liblua.so;/usr/lib/libm.so") #CMake bug: find lua 5.3 but link liblua5.2.so!
 
 find_package(Boost COMPONENTS system filesystem REQUIRED)
 list(APPEND LIBS ${Boost_SYSTEM_LIBRARY})
@@ -40,4 +41,3 @@ include_directories(thirdparty)
 add_executable(${PROJECT_NAME} ${sources_files})
 
 target_link_libraries(${PROJECT_NAME} ${LIBS})
-

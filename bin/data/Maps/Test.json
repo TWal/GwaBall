@@ -14,6 +14,22 @@
             "shape": {
                 "type": "box",
                 "size": [2, 2, 2]
+            },
+            "script": {
+                "file": "PositionPrinter.lua",
+                "class": "PositionPrinter"
+            }
+        },
+        "fan": {
+            "mesh": "Fan.mesh",
+            "mass": 0,
+            "shape": {
+                "type": "box",
+                "size": [2,2,2]
+            },
+            "script": {
+                "file": "Fan.lua",
+                "class": "Fan"
             }
         }
     },
@@ -23,14 +39,24 @@
             {"pos": [0, 0, 0], "rot": [0, 0, 0]}
         ],
         "box": [
-            {"pos": [5, 5, 5], "rot": [0, 0, 0]},
-            {"pos": [5, 5, -5], "rot": [0, 0, 0]},
-            {"pos": [-5, 5, 5], "rot": [0, 0, 0]},
-            {"pos": [-5, 5, -5], "rot": [0, 0, 0]}
+            {"pos": [5, 5, 5], "rot": [0, 0, 0], "scriptArgs": "1"},
+            {"pos": [5, 5, -5], "rot": [0, 0, 0], "scriptArgs": "2"},
+            {"pos": [-5, 5, 5], "rot": [0, 0, 0], "scriptArgs": "3"},
+            {"pos": [-5, 5, -5], "rot": [0, 0, 0], "scriptArgs": "4"}
+        ],
+        "fan": [
+            {"pos": [0,-0.75,-26], "rot": [0,0,0]}
         ]
     },
 
     "player": {
         "pos": [0, 5, 0]
-    }
+    },
+
+    "scripts": [
+        {
+            "class": "FramePrinter",
+            "file": "FramePrinter.lua"
+        }
+    ]
 }

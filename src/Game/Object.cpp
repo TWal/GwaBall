@@ -56,13 +56,25 @@ void Object::load(const rapidjson::Value& val, Logger* log) {
         return;
     }
 
+    std::string scriptArgs = "";
+    if(const rapidjson::Value::Member* mscript = val.FindMember("scriptArgs")) {
+        if(mscript->value.IsString()) {
+            scriptArgs = mscript->value.GetString();
+            if(!_template->hasScript()) {
+                log->error("$.objects.%s[%u].scriptArgs exists but $.templates.%s.script does not exists", _template->getName().c_str(), _id, _template->getName().c_str());
+            }
+        } else {
+            log->error("$.objects.%s[%u].scriptArgs is not a string", _template->getName().c_str(), _id);
+        }
+    }
+
     _group = _template->getMass() <= FLT_EPSILON ? PhysicsEngine::COL_STATIC : PhysicsEngine::COL_DYNAMIC;
     _mask = _template->getMass() <= FLT_EPSILON ? PhysicsEngine::COL_NOSTATIC : PhysicsEngine::COL_ALL;
 
     _body = _parent->parent()->getPhysicsEngine()->addRigidBody(_template->getMass(), _template->getShape(), _node, _group, _mask);
 
     if(_template->hasScript()) {
-        _parent->parent()->getScriptEngine()->instanciateScript(_template->getScriptClass(), _body);
+        _parent->parent()->getScriptEngine()->instanciateScript(_template->getScriptClass(), scriptArgs, _body);
     }
 }
 

@@ -6,15 +6,10 @@
 #include <unordered_map>
 
 class Game;
-/*
-class asSMessageInfo;
-class asIScriptEngine;
-class asIScriptModule;
-class asIScriptContext;
-class asIScriptFunction;
-class asIObjectType;
-*/
 class btRigidBody;
+namespace sol {
+    class state;
+}
 
 class ScriptEngine : public Engine {
     public:
@@ -27,20 +22,10 @@ class ScriptEngine : public Engine {
         virtual void changeState(int state);
 
         void loadFile(const std::string& file, const std::string& className);
-        void loadString(const std::string& str, const std::string& section);
-        void instanciateScript(const std::string& className, btRigidBody* body = nullptr);
+        void instanciateScript(const std::string& className, const std::string& args, btRigidBody* body = nullptr);
 
     private:
-        int _compile();
-        //void _messageCallback(const asSMessageInfo* msg);
-        /*
-        asIScriptEngine* _engine;
-        asIScriptModule* _module;
-        asIScriptContext* _ctx;
-        asIScriptFunction* _addFunc;
-        asIScriptFunction* _frameFunc;
-        */
-        std::unordered_map<std::string, std::string> _classesCode;
+        sol::state* _lua;
 };
 
 #endif

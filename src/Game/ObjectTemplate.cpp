@@ -70,11 +70,11 @@ void ObjectTemplate::load(const rapidjson::Value& val, Logger* log) {
         if(script.IsObject()) {
             if(const rapidjson::Value::Member* mclassName = script.FindMember("class")) {
                 if(mclassName->value.IsString()) {
-                    if(const rapidjson::Value::Member* mpath = script.FindMember("path")) {
+                    if(const rapidjson::Value::Member* mpath = script.FindMember("file")) {
                         if(mpath->value.IsString()) {
                             _scriptClass = mclassName->value.GetString();
-                            _scriptPath = mpath->value.GetString();
-                            _parent->parent()->getScriptEngine()->loadFile("data/Scripts/" + _scriptPath, _scriptClass);
+                            _scriptFile = mpath->value.GetString();
+                            _parent->parent()->getScriptEngine()->loadFile("data/Scripts/" + _scriptFile, _scriptClass);
                         } else {
                             log->error("$.templates.%s.script.path must be a string, aborting", _name.c_str());
                             return;
@@ -119,7 +119,7 @@ const std::string& ObjectTemplate::getEntityPath() {
 }
 
 bool ObjectTemplate::hasScript() {
-    return !(_scriptClass.empty() || _scriptPath.empty());
+    return !(_scriptClass.empty() || _scriptFile.empty());
 }
 
 const std::string& ObjectTemplate::getScriptClass() {
