@@ -24,9 +24,10 @@ void ObjectManager::load(const std::string& file) {
         fseek(f, 0, SEEK_END);
         long size = ftell(f);
         fseek(f, 0, SEEK_SET);
-        str = new char[size];
+        str = new char[size+1]; //+1 for the ending \0
         fread(str, size, 1, f);
         fclose(f);
+        str[size] = 0;
 
         rapidjson::Document doc;
         doc.ParseInsitu<0>(str);
